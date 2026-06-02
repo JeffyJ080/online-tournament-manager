@@ -1,0 +1,28 @@
+# Local/private config
+mate_config/database.php
+mate_config/mail.php
+
+# Keep example config files
+!mate_config/database.example.php
+!mate_config/mail.example.php
+
+# Uploads
+public_html/uploads/*
+!public_html/uploads/.gitkeep
+!public_html/uploads/payment_proofs/.gitkeep
+!public_html/uploads/event_posters/.gitkeep
+
+# Vendor files can be added manually later
+# If PHPMailer is manually included and you want it in repo, remove this line
+mate_vendor/PHPMailer/
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs/cache
+*.log
+cache/
+tmp/
