@@ -1,0 +1,30 @@
+<?php
+$appConfig = require __DIR__ . '/../../../mate_config/app.php';
+$pageTitle = $title ?? $appConfig['app_name'];
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?> | <?= htmlspecialchars($appConfig['app_name']) ?></title>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="index.php?page=home">Mate Tournaments</a>
+
+        <ul>
+            <li><a href="index.php?page=home">Home</a></li>
+            <li><a href="index.php?page=events">Events</a></li>
+            <li><a href="index.php?page=leaderboards">Leaderboards</a></li>
+            <li><a href="index.php?page=venues">Venues</a></li>
+            <li><a href="index.php?page=about">About</a></li>
+            <li><a href="index.php?page=contact">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
