@@ -1,0 +1,210 @@
+:root {
+    --bg: #080D1A;
+    --surface: #0E1526;
+    --surface-soft: #151F33;
+    --gold: #C8961C;
+    --gold-bright: #F0B42A;
+    --text: #D8E2F0;
+    --muted: #7D8EA8;
+    --danger: #DA3633;
+    --success: #2EA043;
+
+    --radius: 18px;
+    --radius-sm: 10px;
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    --max-width: 1180px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(200, 150, 28, 0.14), transparent 32rem),
+        radial-gradient(circle at bottom right, rgba(21, 31, 51, 0.9), transparent 28rem),
+        var(--bg);
+    color: var(--text);
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+header {
+    border-bottom: 1px solid rgba(216, 226, 240, 0.08);
+    background: rgba(8, 13, 26, 0.88);
+    backdrop-filter: blur(14px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+nav {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+nav > a {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--gold-bright);
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+nav li a {
+    color: var(--muted);
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+}
+
+nav li a:hover {
+    color: var(--gold-bright);
+}
+
+main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 4rem 1.25rem;
+}
+
+h1 {
+    font-size: clamp(2.3rem, 6vw, 5rem);
+    line-height: 0.95;
+    margin: 0 0 1rem;
+    letter-spacing: -0.06em;
+}
+
+p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    max-width: 720px;
+}
+
+footer {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+    border-top: 1px solid rgba(216, 226, 240, 0.08);
+    color: var(--muted);
+}
+
+.card {
+    background: linear-gradient(145deg, rgba(14, 21, 38, 0.96), rgba(21, 31, 51, 0.88));
+    border: 1px solid rgba(216, 226, 240, 0.08);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.2rem;
+    border-radius: 999px;
+    background: var(--gold);
+    color: #080D1A;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn:hover {
+    background: var(--gold-bright);
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--gold-bright);
+    border: 1px solid rgba(240, 180, 42, 0.45);
+}
+
+.btn-outline:hover {
+    background: rgba(240, 180, 42, 0.08);
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 2rem;
+    align-items: center;
+}
+
+.hero-kicker {
+    color: var(--gold-bright);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.78rem;
+    margin-bottom: 1rem;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.stat-card strong {
+    display: block;
+    color: var(--gold-bright);
+    font-size: 1.8rem;
+}
+
+.stat-card span {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+@media (max-width: 760px) {
+    nav {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    nav ul {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    main {
+        padding-top: 2.5rem;
+    }
+}
