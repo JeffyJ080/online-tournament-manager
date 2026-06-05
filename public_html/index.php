@@ -7,6 +7,7 @@ require_once __DIR__ . '/../mate_app/Controllers/PublicController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AuthController.php';
 require_once __DIR__ . '/../mate_app/Controllers/DashboardController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
+require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
 
 $config = require __DIR__ . '/../mate_config/app.php';
 

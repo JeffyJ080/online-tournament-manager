@@ -2,15 +2,13 @@
 
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
+require_once __DIR__ . '/../Middleware/RequireAuth.php';
 
 class DashboardController extends Controller
 {
     public function index(): void
     {
-        if (!Auth::check()) {
-            header('Location: index.php?page=login');
-            exit;
-        }
+        RequireAuth::check();
 
         $role = Auth::role();
 
