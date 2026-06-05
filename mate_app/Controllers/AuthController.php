@@ -135,4 +135,79 @@ class AuthController extends Controller
             ]);
         }
     }
+
+    public function login(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=login');
+            exit;
+        }
+
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        $errors = [];
+
+        if ($email === '') {
+            $errors[] = 'Email address is required.';
+        }
+
+        if ($password === '') {
+            $errors[] = 'Password is required.';
+        }
+
+        $userModel = new User();
+        $user = null;
+
+        if (empty($errors)) {
+            $user = $userModel->findByEmail($email);
+
+            if (!$user || !password_verify($password, $user['password_hash'])) {
+                $errors[] = 'Invalid email or password.';
+            } elseif ($user['status'] !== 'active') {
+                $errors[] = 'This account is not active.';
+            }
+        }
+
+        if (!empty($errors)) {
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                $user['id'] ?? null,
+                'failed_login',
+                'user',
+                $user['id'] ?? null,
+                'Failed login attempt for email: ' . $email
+            );
+
+            $this->view('auth/login', [
+                'title' => 'Login',
+                'heading' => 'Login to Mate Tournaments',
+                'errors' => $errors,
+                'old' => [
+                    'email' => $email,
+                ],
+            ]);
+            return;
+        }
+
+        session_regenerate_id(true);
+
+        $_SESSION['user'] = [
+            'id' => (int) $user['id'],
+            'email' => $user['email'],
+            'role' => $user['role_name'],
+        ];
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            (int) $user['id'],
+            'user_logged_in',
+            'user',
+            (int) $user['id'],
+            'User logged in successfully.'
+        );
+
+        header('Location: index.php?page=dashboard');
+        exit;
+    }
 }
