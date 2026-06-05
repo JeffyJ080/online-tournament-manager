@@ -5,6 +5,7 @@ require_once __DIR__ . '/../mate_app/Core/Database.php';
 require_once __DIR__ . '/../mate_app/Core/Router.php';
 require_once __DIR__ . '/../mate_app/Controllers/PublicController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AuthController.php';
+require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 
 $config = require __DIR__ . '/../mate_config/app.php';
 
@@ -46,18 +47,23 @@ $router->get('login-submit', function () use ($authController) {
 });
 
 $router->get('dashboard', function () {
-    if (!isset($_SESSION['user'])) {
+    if (!Auth::check()) {
         header('Location: index.php?page=login');
         exit;
     }
 
-    $role = $_SESSION['user']['role'];
+    $user = Auth::user();
 
     echo '<h1>Dashboard</h1>';
-    echo '<p>Logged in as: ' . htmlspecialchars($_SESSION['user']['email']) . '</p>';
-    echo '<p>Role: ' . htmlspecialchars($role) . '</p>';
+    echo '<p>Logged in as: ' . htmlspecialchars($user['email']) . '</p>';
+    echo '<p>Role: ' . htmlspecialchars($user['role']) . '</p>';
+    echo '<p><a href="index.php?page=logout">Logout</a></p>';
 
     echo '<p>This will redirect to role-specific dashboards next.</p>';
+});
+
+$router->get('logout', function () use ($authController) {
+    $authController->logout();
 });
 
 $router->dispatch();

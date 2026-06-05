@@ -1,5 +1,6 @@
 <?php
 $appConfig = require __DIR__ . '/../../../mate_config/app.php';
+require_once __DIR__ . '/../../Helpers/Auth.php';
 $pageTitle = $title ?? $appConfig['app_name'];
 ?>
 
@@ -24,8 +25,13 @@ $pageTitle = $title ?? $appConfig['app_name'];
             <li><a href="index.php?page=venues">Venues</a></li>
             <li><a href="index.php?page=about">About</a></li>
             <li><a href="index.php?page=contact">Contact</a></li>
-            <li><a href="index.php?page=login">Login</a></li>
-            <li><a href="index.php?page=register">Register</a></li>
+            <?php if (Auth::check()): ?>
+                <li><a href="index.php?page=dashboard">Dashboard</a></li>
+                <li><a href="index.php?page=logout">Logout</a></li>
+            <?php else: ?>
+                <li><a href="index.php?page=login">Login</a></li>
+                <li><a href="index.php?page=register">Register</a></li>
+            <?php endif; ?>
         </ul>
     </nav>
 </header>

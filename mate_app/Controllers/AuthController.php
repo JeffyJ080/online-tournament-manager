@@ -210,4 +210,41 @@ class AuthController extends Controller
         header('Location: index.php?page=dashboard');
         exit;
     }
+
+    public function logout(): void
+    {
+        $userId = $_SESSION['user']['id'] ?? null;
+
+        if ($userId !== null) {
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                (int) $userId,
+                'user_logged_out',
+                'user',
+                (int) $userId,
+                'User logged out.'
+            );
+        }
+
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+
+        session_destroy();
+
+        header('Location: index.php?page=login');
+        exit;
+    }
 }
