@@ -260,3 +260,46 @@ CREATE TABLE payments (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE payment_proofs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    payment_id INT NOT NULL,
+    registration_id INT NOT NULL,
+    uploaded_by INT NULL,
+
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    file_type VARCHAR(100) NULL,
+    file_size INT NULL,
+
+    status ENUM('uploaded', 'approved', 'rejected') NOT NULL DEFAULT 'uploaded',
+
+    reviewed_by INT NULL,
+    reviewed_at DATETIME NULL,
+    review_notes TEXT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_proofs_payment
+        FOREIGN KEY (payment_id) REFERENCES payments(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payment_proofs_registration
+        FOREIGN KEY (registration_id) REFERENCES event_registrations(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payment_proofs_uploaded_by
+        FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payment_proofs_reviewed_by
+        FOREIGN KEY (reviewed_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
