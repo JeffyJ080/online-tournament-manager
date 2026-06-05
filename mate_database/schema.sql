@@ -78,3 +78,35 @@ CREATE TABLE venues (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    venue_id INT NOT NULL,
+    title VARCHAR(160) NOT NULL,
+    slug VARCHAR(180) NOT NULL UNIQUE,
+    description TEXT NULL,
+    event_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NULL,
+    entry_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    prize_info VARCHAR(255) NULL,
+    format ENUM('knockout', 'swiss', 'round_robin', 'weekly_points', 'team', 'doubles') NOT NULL DEFAULT 'knockout',
+    max_players INT NOT NULL DEFAULT 32,
+    registration_status ENUM('open', 'closed', 'full', 'cancelled') NOT NULL DEFAULT 'open',
+    event_status ENUM('draft', 'published', 'running', 'completed', 'cancelled') NOT NULL DEFAULT 'draft',
+    poster_path VARCHAR(255) NULL,
+    notes TEXT NULL,
+    created_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_events_venue
+        FOREIGN KEY (venue_id) REFERENCES venues(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_events_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
