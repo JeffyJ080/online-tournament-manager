@@ -1,11 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../Core/Controller.php';
+require_once __DIR__ . '/../Core/Database.php';
 require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
+require_once __DIR__ . '/../Models/Payment.php';
 
 class PublicController extends Controller
 {
@@ -236,29 +238,71 @@ class PublicController extends Controller
         $registrationStatus = 'pending';
         $paymentStatus = 'unpaid';
 
-        $registrationId = $registrationModel->create([
-            'event_id' => $eventId,
-            'player_id' => $playerId,
-            'user_id' => $userId,
-            'full_name' => $fullName,
-            'display_name' => $displayName !== '' ? $displayName : null,
-            'email' => $email,
-            'phone' => $phone !== '' ? $phone : null,
-            'rating_category' => $ratingCategory,
-            'registration_status' => $registrationStatus,
-            'payment_status' => $paymentStatus,
-            'payment_method' => $paymentMethod,
-            'notes' => null,
-        ]);
+        $db = Database::connect();
 
-        $auditLog = new AuditLog();
-        $auditLog->create(
-            $userId,
-            'event_registration_created',
-            'event_registration',
-            $registrationId,
-            'Registration created for event: ' . $event['title']
-        );
+        try {
+            $db->beginTransaction();
+
+            $registrationId = $registrationModel->create([
+                'event_id' => $eventId,
+                'player_id' => $playerId,
+                'user_id' => $userId,
+                'full_name' => $fullName,
+                'display_name' => $displayName !== '' ? $displayName : null,
+                'email' => $email,
+                'phone' => $phone !== '' ? $phone : null,
+                'rating_category' => $ratingCategory,
+                'registration_status' => $registrationStatus,
+                'payment_status' => $paymentStatus,
+                'payment_method' => $paymentMethod,
+                'notes' => null,
+            ]);
+
+            $paymentModel = new Payment();
+
+            $paymentId = $paymentModel->createForRegistration([
+                'registration_id' => $registrationId,
+                'event_id' => $eventId,
+                'user_id' => $userId,
+                'player_id' => $playerId,
+                'amount' => $event['entry_fee'],
+                'payment_method' => $paymentMethod,
+                'payment_status' => $paymentStatus,
+                'notes' => 'Payment record created during event registration.',
+            ]);
+
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                $userId,
+                'event_registration_created',
+                'event_registration',
+                $registrationId,
+                'Registration created for event: ' . $event['title']
+            );
+
+            $auditLog->create(
+                $userId,
+                'payment_record_created',
+                'payment',
+                $paymentId,
+                'Payment record created for registration #' . $registrationId
+            );
+
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+
+            $this->view('public/register_event', [
+                'title' => 'Register for Event',
+                'heading' => 'Register for Event',
+                'event' => $event,
+                'spots_left' => $spotsLeft,
+                'active_registrations' => $activeRegistrations,
+                'errors' => ['Something went wrong while saving your registration. Please try again.'],
+                'old' => $old,
+            ]);
+            return;
+        }
 
         $this->view('public/register_event_success', [
             'title' => 'Registration Submitted',
