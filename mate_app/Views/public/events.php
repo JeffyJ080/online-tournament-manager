@@ -94,9 +94,19 @@ function formatEventLabel(string $value): string
                         <strong><?= htmlspecialchars($event['prize_info'] ?? '-') ?></strong>
                     </div>
 
+                    <?php
+                    $activeCount = (int) ($event['active_registrations'] ?? 0);
+                    $spotsLeft = max(0, (int) $event['max_players'] - $activeCount);
+                    ?>
+
                     <div>
-                        <span>Max Players</span>
-                        <strong><?= (int) $event['max_players'] ?></strong>
+                        <span>Registered</span>
+                        <strong><?= $activeCount ?> / <?= (int) $event['max_players'] ?></strong>
+                    </div>
+
+                    <div>
+                        <span>Spots Left</span>
+                        <strong><?= $spotsLeft ?></strong>
                     </div>
                 </div>
 

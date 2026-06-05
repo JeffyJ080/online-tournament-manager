@@ -1,6 +1,8 @@
 <?php
 $heading = $heading ?? 'Event Details';
 $event = $event ?? [];
+$activeCount = (int) ($event['active_registrations'] ?? 0);
+$spotsLeft = max(0, (int) ($event['max_players'] ?? 0) - $activeCount);
 
 function eventDetailDate(string $date): string
 {
@@ -86,8 +88,13 @@ function eventDetailLabel(string $value): string
             </div>
 
             <div>
-                <span>Max Players</span>
-                <strong><?= (int) ($event['max_players'] ?? 0) ?></strong>
+                <span>Registered</span>
+                <strong><?= $activeCount ?> / <?= (int) ($event['max_players'] ?? 0) ?></strong>
+            </div>
+
+            <div>
+                <span>Spots Left</span>
+                <strong><?= $spotsLeft ?></strong>
             </div>
 
             <div>
