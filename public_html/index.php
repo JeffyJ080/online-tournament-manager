@@ -6,6 +6,7 @@ require_once __DIR__ . '/../mate_app/Core/Router.php';
 require_once __DIR__ . '/../mate_app/Controllers/PublicController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AuthController.php';
 require_once __DIR__ . '/../mate_app/Controllers/DashboardController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminVenueController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -17,6 +18,7 @@ $router = new Router();
 $publicController = new PublicController();
 $authController = new AuthController();
 $dashboardController = new DashboardController();
+$adminVenueController = new AdminVenueController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -56,6 +58,10 @@ $router->get('dashboard', function () use ($dashboardController) {
 
 $router->get('logout', function () use ($authController) {
     $authController->logout();
+});
+
+$router->get('admin-venues', function () use ($adminVenueController) {
+    $adminVenueController->index();
 });
 
 $router->dispatch();
