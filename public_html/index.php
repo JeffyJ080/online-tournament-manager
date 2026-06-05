@@ -84,4 +84,8 @@ $router->get('event', function () use ($publicController) {
     $publicController->eventDetails();
 });
 
+$router->get('register-event', function () use ($publicController) {
+    $publicController->registerEvent();
+});
+
 $router->dispatch();

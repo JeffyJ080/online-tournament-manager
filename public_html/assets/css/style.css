@@ -514,3 +514,14 @@ td {
         grid-template-columns: 1fr;
     }
 }
+
+.no-margin {
+    margin: 0;
+}
+
+button:disabled,
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
