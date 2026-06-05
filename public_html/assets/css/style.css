@@ -285,3 +285,24 @@ textarea:focus {
     border-color: rgba(218, 54, 51, 0.4);
     color: var(--text);
 }
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.card h2 {
+    margin-top: 0;
+}
+
+@media (max-width: 760px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
