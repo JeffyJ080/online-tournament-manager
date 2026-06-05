@@ -7,6 +7,7 @@ require_once __DIR__ . '/../mate_app/Controllers/PublicController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AuthController.php';
 require_once __DIR__ . '/../mate_app/Controllers/DashboardController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminVenueController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -19,6 +20,7 @@ $publicController = new PublicController();
 $authController = new AuthController();
 $dashboardController = new DashboardController();
 $adminVenueController = new AdminVenueController();
+$adminRegistrationController = new AdminRegistrationController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -90,6 +92,10 @@ $router->get('register-event', function () use ($publicController) {
 
 $router->get('register-event-submit', function () use ($publicController) {
     $publicController->storeEventRegistration();
+});
+
+$router->get('admin-registrations', function () use ($adminRegistrationController) {
+    $adminRegistrationController->index();
 });
 
 $router->dispatch();

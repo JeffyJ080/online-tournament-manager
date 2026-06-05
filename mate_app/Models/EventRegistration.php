@@ -131,4 +131,25 @@ class EventRegistration extends Model
 
         return $stmt->fetchAll();
     }
+
+    public function allWithEventDetails(): array
+    {
+        $sql = "
+            SELECT
+                event_registrations.*,
+                events.title AS event_title,
+                events.event_date,
+                events.start_time,
+                venues.name AS venue_name
+            FROM event_registrations
+            INNER JOIN events ON event_registrations.event_id = events.id
+            INNER JOIN venues ON events.venue_id = venues.id
+            ORDER BY events.event_date DESC, event_registrations.registered_at DESC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
 }
