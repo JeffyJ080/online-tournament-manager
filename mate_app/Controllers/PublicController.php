@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../Core/Controller.php';
+require_once __DIR__ . '/../Models/Event.php';
 
 class PublicController extends Controller
 {
@@ -14,9 +15,13 @@ class PublicController extends Controller
 
     public function events(): void
     {
+        $eventModel = new Event();
+        $events = $eventModel->publishedUpcoming();
+
         $this->view('public/events', [
             'title' => 'Events',
             'heading' => 'Upcoming Events',
+            'events' => $events,
         ]);
     }
 
