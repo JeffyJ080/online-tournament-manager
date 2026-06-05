@@ -208,3 +208,55 @@ ADD CONSTRAINT fk_events_series
     FOREIGN KEY (series_id) REFERENCES event_series(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE;
+
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    registration_id INT NOT NULL,
+    event_id INT NOT NULL,
+    user_id INT NULL,
+    player_id INT NULL,
+
+    amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    payment_method ENUM('cash', 'eft', 'comped', 'other') NOT NULL DEFAULT 'cash',
+    payment_status ENUM(
+        'unpaid',
+        'paid_cash',
+        'paid_eft',
+        'proof_uploaded',
+        'verified',
+        'refunded',
+        'comped'
+    ) NOT NULL DEFAULT 'unpaid',
+
+    verified_by INT NULL,
+    verified_at DATETIME NULL,
+    notes TEXT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payments_registration
+        FOREIGN KEY (registration_id) REFERENCES event_registrations(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payments_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payments_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payments_player
+        FOREIGN KEY (player_id) REFERENCES players(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_payments_verified_by
+        FOREIGN KEY (verified_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
