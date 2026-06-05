@@ -164,3 +164,47 @@ CREATE TABLE event_registrations (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE event_series (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    venue_id INT NOT NULL,
+    title VARCHAR(160) NOT NULL,
+    slug VARCHAR(180) NOT NULL UNIQUE,
+    description TEXT NULL,
+
+    recurrence_type ENUM('none', 'weekly', 'monthly', 'custom') NOT NULL DEFAULT 'none',
+
+    -- For weekly events: 1 = Monday, 2 = Tuesday, 3 = Wednesday, etc.
+    day_of_week TINYINT NULL,
+
+    -- For monthly events: example 25 for fixed date monthly.
+    day_of_month TINYINT NULL,
+
+    -- For events like "last Thursday of the month"
+    monthly_week ENUM('first', 'second', 'third', 'fourth', 'last') NULL,
+    monthly_weekday TINYINT NULL,
+
+    default_start_time TIME NULL,
+    default_end_time TIME NULL,
+    default_entry_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    default_prize_info VARCHAR(255) NULL,
+    default_format ENUM('knockout', 'swiss', 'round_robin', 'weekly_points', 'team', 'doubles') NOT NULL DEFAULT 'knockout',
+    default_max_players INT NOT NULL DEFAULT 32,
+
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_event_series_venue
+        FOREIGN KEY (venue_id) REFERENCES venues(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+ALTER TABLE events
+ADD COLUMN series_id INT NULL AFTER id,
+ADD CONSTRAINT fk_events_series
+    FOREIGN KEY (series_id) REFERENCES event_series(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;

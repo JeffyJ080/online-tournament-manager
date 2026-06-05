@@ -93,3 +93,65 @@ SELECT
     'Starter seed event.'
 FROM venues
 WHERE slug = 'tonis-pizza';
+
+INSERT INTO event_series (
+    venue_id,
+    title,
+    slug,
+    description,
+    recurrence_type,
+    day_of_week,
+    default_start_time,
+    default_entry_fee,
+    default_prize_info,
+    default_format,
+    default_max_players,
+    status
+)
+SELECT
+    id,
+    'Sinkhuis Weekly Chess Night',
+    'sinkhuis-weekly-chess-night',
+    'Weekly chess night with leaderboard points and year-end prize pot.',
+    'weekly',
+    3,
+    '18:00:00',
+    100.00,
+    'Nightly prizes plus year-end prize pot',
+    'weekly_points',
+    32,
+    'active'
+FROM venues
+WHERE slug = 'sinkhuis';
+
+INSERT INTO event_series (
+    venue_id,
+    title,
+    slug,
+    description,
+    recurrence_type,
+    monthly_week,
+    monthly_weekday,
+    default_start_time,
+    default_entry_fee,
+    default_prize_info,
+    default_format,
+    default_max_players,
+    status
+)
+SELECT
+    id,
+    'Toni''s Knockout Chess',
+    'tonis-knockout-chess',
+    'Monthly knockout chess event at Toni''s Pizza.',
+    'monthly',
+    'last',
+    4,
+    '18:30:00',
+    150.00,
+    'R600 up for grabs',
+    'knockout',
+    40,
+    'active'
+FROM venues
+WHERE slug = 'tonis-pizza';
