@@ -110,3 +110,57 @@ CREATE TABLE events (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE event_registrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    player_id INT NULL,
+    user_id INT NULL,
+
+    full_name VARCHAR(120) NOT NULL,
+    display_name VARCHAR(80) NULL,
+    email VARCHAR(120) NOT NULL,
+    phone VARCHAR(30) NULL,
+
+    rating_category ENUM('beginner', 'casual', 'standard') NOT NULL DEFAULT 'beginner',
+
+    registration_status ENUM(
+        'pending',
+        'confirmed',
+        'cancelled',
+        'waitlisted',
+        'checked_in',
+        'no_show'
+    ) NOT NULL DEFAULT 'pending',
+
+    payment_status ENUM(
+        'unpaid',
+        'paid_cash',
+        'paid_eft',
+        'proof_uploaded',
+        'verified',
+        'refunded',
+        'comped'
+    ) NOT NULL DEFAULT 'unpaid',
+
+    payment_method ENUM('cash', 'eft', 'comped', 'other') NOT NULL DEFAULT 'cash',
+
+    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    checked_in_at DATETIME NULL,
+    notes TEXT NULL,
+
+    CONSTRAINT fk_event_registrations_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_event_registrations_player
+        FOREIGN KEY (player_id) REFERENCES players(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_event_registrations_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
