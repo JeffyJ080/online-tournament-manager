@@ -56,3 +56,25 @@ CREATE TABLE audit_logs (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE venues (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    slug VARCHAR(140) NOT NULL UNIQUE,
+    address VARCHAR(255) NULL,
+    city VARCHAR(100) NULL,
+    contact_person VARCHAR(120) NULL,
+    contact_email VARCHAR(120) NULL,
+    contact_phone VARCHAR(30) NULL,
+    venue_manager_user_id INT NULL,
+    food_deal_description TEXT NULL,
+    notes TEXT NULL,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_venues_manager_user
+        FOREIGN KEY (venue_manager_user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
