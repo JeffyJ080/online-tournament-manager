@@ -24,6 +24,8 @@ $pageTitle = $title ?? $appConfig['app_name'];
             <li><a href="index.php?page=venues">Venues</a></li>
             <li><a href="index.php?page=about">About</a></li>
             <li><a href="index.php?page=contact">Contact</a></li>
+            <li><a href="index.php?page=login">Login</a></li>
+            <li><a href="index.php?page=register">Register</a></li>
         </ul>
     </nav>
 </header>

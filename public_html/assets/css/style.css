@@ -208,3 +208,62 @@ footer {
         padding-top: 2.5rem;
     }
 }
+
+.auth-card {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.auth-card h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+}
+
+form {
+    display: grid;
+    gap: 1.1rem;
+    margin-top: 2rem;
+    max-width: 520px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+label {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+input,
+select,
+textarea {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: 0.95rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(216, 226, 240, 0.14);
+    background: rgba(8, 13, 26, 0.85);
+    color: var(--text);
+    font: inherit;
+}
+
+select {
+    cursor: pointer;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: rgba(240, 180, 42, 0.75);
+    box-shadow: 0 0 0 3px rgba(240, 180, 42, 0.12);
+}
