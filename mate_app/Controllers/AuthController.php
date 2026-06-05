@@ -10,6 +10,11 @@ class AuthController extends Controller
 {
     public function showRegister(): void
     {
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php?page=dashboard');
+            exit;
+        }
+
         $this->view('auth/register', [
             'title' => 'Register',
             'heading' => 'Create your Mate Tournaments account',
@@ -20,9 +25,16 @@ class AuthController extends Controller
 
     public function showLogin(): void
     {
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php?page=dashboard');
+            exit;
+        }
+
         $this->view('auth/login', [
             'title' => 'Login',
             'heading' => 'Login to Mate Tournaments',
+            'errors' => [],
+            'old' => [],
         ]);
     }
 

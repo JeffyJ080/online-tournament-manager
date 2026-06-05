@@ -19,18 +19,18 @@ $pageTitle = $title ?? $appConfig['app_name'];
         <a href="index.php?page=home">Mate Tournaments</a>
 
         <ul>
-            <li><a href="index.php?page=home">Home</a></li>
-            <li><a href="index.php?page=events">Events</a></li>
-            <li><a href="index.php?page=leaderboards">Leaderboards</a></li>
-            <li><a href="index.php?page=venues">Venues</a></li>
-            <li><a href="index.php?page=about">About</a></li>
-            <li><a href="index.php?page=contact">Contact</a></li>
+            <li><a href="<?= url('home') ?>">Home</a></li>
+            <li><a href="<?= url('events') ?>">Events</a></li>
+            <li><a href="<?= url('leaderboards') ?>">Leaderboards</a></li>
+            <li><a href="<?= url('venues') ?>">Venues</a></li>
+            <li><a href="<?= url('about') ?>">About</a></li>
+            <li><a href="<?= url('contact') ?>">Contact</a></li>
             <?php if (Auth::check()): ?>
-                <li><a href="index.php?page=dashboard">Dashboard</a></li>
-                <li><a href="index.php?page=logout">Logout</a></li>
+                <li><a href="<?= url('dashboard') ?>">Dashboard</a></li>
+                <li><a href="<?= url('logout') ?>">Logout</a></li>
             <?php else: ?>
-                <li><a href="index.php?page=login">Login</a></li>
-                <li><a href="index.php?page=register">Register</a></li>
+                <li><a href="<?= url('login') ?>">Login</a></li>
+                <li><a href="<?= url('register') ?>">Register</a></li>
             <?php endif; ?>
         </ul>
     </nav>
