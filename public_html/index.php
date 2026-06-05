@@ -64,4 +64,12 @@ $router->get('admin-venues', function () use ($adminVenueController) {
     $adminVenueController->index();
 });
 
+$router->get('admin-venues-create', function () use ($adminVenueController) {
+    $adminVenueController->create();
+});
+
+$router->get('admin-venues-store', function () use ($adminVenueController) {
+    $adminVenueController->store();
+});
+
 $router->dispatch();

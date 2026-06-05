@@ -66,4 +66,50 @@ class Venue extends Model
 
         return $venue ?: null;
     }
+
+    public function create(array $data): int
+    {
+        $sql = "
+            INSERT INTO venues (
+                name,
+                slug,
+                address,
+                city,
+                contact_person,
+                contact_email,
+                contact_phone,
+                food_deal_description,
+                notes,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->execute([
+            $data['name'],
+            $data['slug'],
+            $data['address'] ?? null,
+            $data['city'] ?? null,
+            $data['contact_person'] ?? null,
+            $data['contact_email'] ?? null,
+            $data['contact_phone'] ?? null,
+            $data['food_deal_description'] ?? null,
+            $data['notes'] ?? null,
+            $data['status'] ?? 'active',
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function slugExists(string $slug): bool
+    {
+        $sql = "SELECT id FROM venues WHERE slug = ? LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$slug]);
+
+        return (bool) $stmt->fetch();
+    }
 }
