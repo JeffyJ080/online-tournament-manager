@@ -152,4 +152,56 @@ class EventRegistration extends Model
 
         return $stmt->fetchAll();
     }
+
+    public function findByIdWithEventDetails(int $id): ?array
+    {
+        $sql = "
+            SELECT
+                event_registrations.*,
+                events.title AS event_title,
+                events.event_date,
+                events.start_time,
+                venues.name AS venue_name
+            FROM event_registrations
+            INNER JOIN events ON event_registrations.event_id = events.id
+            INNER JOIN venues ON events.venue_id = venues.id
+            WHERE event_registrations.id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+
+        $registration = $stmt->fetch();
+
+        return $registration ?: null;
+    }
+
+    public function updateStatuses(
+        int $id,
+        string $registrationStatus,
+        string $paymentStatus,
+        string $paymentMethod,
+        ?string $notes = null
+    ): bool {
+        $sql = "
+            UPDATE event_registrations
+            SET
+                registration_status = ?,
+                payment_status = ?,
+                payment_method = ?,
+                notes = ?
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            $registrationStatus,
+            $paymentStatus,
+            $paymentMethod,
+            $notes,
+            $id,
+        ]);
+    }
 }

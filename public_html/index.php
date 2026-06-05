@@ -98,4 +98,12 @@ $router->get('admin-registrations', function () use ($adminRegistrationControlle
     $adminRegistrationController->index();
 });
 
+$router->get('admin-registrations-edit', function () use ($adminRegistrationController) {
+    $adminRegistrationController->edit();
+});
+
+$router->get('admin-registrations-update', function () use ($adminRegistrationController) {
+    $adminRegistrationController->update();
+});
+
 $router->dispatch();

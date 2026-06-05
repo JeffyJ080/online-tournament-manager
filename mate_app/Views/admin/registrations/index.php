@@ -49,6 +49,7 @@ function adminRegLabel(?string $value): string
                         <th>Registration</th>
                         <th>Payment</th>
                         <th>Registered</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -104,6 +105,12 @@ function adminRegLabel(?string $value): string
 
                             <td>
                                 <?= htmlspecialchars(adminRegDate($registration['registered_at'])) ?>
+                            </td>
+                            
+                            <td>
+                                <a class="btn btn-outline btn-sm" href="index.php?page=admin-registrations-edit&id=<?= (int) $registration['id'] ?>">
+                                    Edit
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
