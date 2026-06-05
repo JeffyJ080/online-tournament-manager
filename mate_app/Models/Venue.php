@@ -112,4 +112,37 @@ class Venue extends Model
 
         return (bool) $stmt->fetch();
     }
+
+    public function update(int $id, array $data): bool
+    {
+        $sql = "
+            UPDATE venues
+            SET
+                name = ?,
+                address = ?,
+                city = ?,
+                contact_person = ?,
+                contact_email = ?,
+                contact_phone = ?,
+                food_deal_description = ?,
+                notes = ?,
+                status = ?
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            $data['name'],
+            $data['address'] ?? null,
+            $data['city'] ?? null,
+            $data['contact_person'] ?? null,
+            $data['contact_email'] ?? null,
+            $data['contact_phone'] ?? null,
+            $data['food_deal_description'] ?? null,
+            $data['notes'] ?? null,
+            $data['status'] ?? 'active',
+            $id,
+        ]);
+    }
 }

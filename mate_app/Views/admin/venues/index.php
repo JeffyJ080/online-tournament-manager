@@ -34,6 +34,7 @@ $venues = $venues ?? [];
                         <th>City</th>
                         <th>Contact</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,6 +57,11 @@ $venues = $venues ?? [];
                                 <span class="status-pill status-<?= htmlspecialchars($venue['status']) ?>">
                                     <?= htmlspecialchars($venue['status']) ?>
                                 </span>
+                            </td>
+                            <td>
+                                <a class="btn btn-outline btn-sm" href="index.php?page=admin-venues-edit&id=<?= (int) $venue['id'] ?>">
+                                    Edit
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

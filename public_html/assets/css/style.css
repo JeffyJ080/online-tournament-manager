@@ -384,3 +384,8 @@ td {
         flex-direction: column;
     }
 }
+
+.btn-sm {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+}

@@ -125,4 +125,132 @@ class AdminVenueController extends Controller
         header('Location: index.php?page=admin-venues');
         exit;
     }
+
+    public function edit(): void
+    {
+        RequireAuth::anyRole(['admin', 'super_admin']);
+
+        $id = (int) ($_GET['id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: index.php?page=admin-venues');
+            exit;
+        }
+
+        $venueModel = new Venue();
+        $venue = $venueModel->findById($id);
+
+        if (!$venue) {
+            http_response_code(404);
+            echo '<h1>404 - Venue not found</h1>';
+            return;
+        }
+
+        $this->view('admin/venues/edit', [
+            'title' => 'Edit Venue',
+            'heading' => 'Edit Venue',
+            'venue' => $venue,
+            'errors' => [],
+            'old' => $venue,
+        ]);
+    }
+
+    public function update(): void
+    {
+        RequireAuth::anyRole(['admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=admin-venues');
+            exit;
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: index.php?page=admin-venues');
+            exit;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+        $city = trim($_POST['city'] ?? '');
+        $contactPerson = trim($_POST['contact_person'] ?? '');
+        $contactEmail = trim($_POST['contact_email'] ?? '');
+        $contactPhone = trim($_POST['contact_phone'] ?? '');
+        $foodDealDescription = trim($_POST['food_deal_description'] ?? '');
+        $notes = trim($_POST['notes'] ?? '');
+        $status = trim($_POST['status'] ?? 'active');
+
+        $errors = [];
+
+        if ($name === '') {
+            $errors[] = 'Venue name is required.';
+        }
+
+        if ($contactEmail !== '' && !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Contact email must be valid.';
+        }
+
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            $errors[] = 'Invalid venue status.';
+        }
+
+        $venueModel = new Venue();
+        $venue = $venueModel->findById($id);
+
+        if (!$venue) {
+            http_response_code(404);
+            echo '<h1>404 - Venue not found</h1>';
+            return;
+        }
+
+        $old = [
+            'id' => $id,
+            'name' => $name,
+            'slug' => $venue['slug'],
+            'address' => $address,
+            'city' => $city,
+            'contact_person' => $contactPerson,
+            'contact_email' => $contactEmail,
+            'contact_phone' => $contactPhone,
+            'food_deal_description' => $foodDealDescription,
+            'notes' => $notes,
+            'status' => $status,
+        ];
+
+        if (!empty($errors)) {
+            $this->view('admin/venues/edit', [
+                'title' => 'Edit Venue',
+                'heading' => 'Edit Venue',
+                'venue' => $venue,
+                'errors' => $errors,
+                'old' => $old,
+            ]);
+            return;
+        }
+
+        $venueModel->update($id, [
+            'name' => $name,
+            'address' => $address !== '' ? $address : null,
+            'city' => $city !== '' ? $city : null,
+            'contact_person' => $contactPerson !== '' ? $contactPerson : null,
+            'contact_email' => $contactEmail !== '' ? $contactEmail : null,
+            'contact_phone' => $contactPhone !== '' ? $contactPhone : null,
+            'food_deal_description' => $foodDealDescription !== '' ? $foodDealDescription : null,
+            'notes' => $notes !== '' ? $notes : null,
+            'status' => $status,
+        ]);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            Auth::id(),
+            'venue_updated',
+            'venue',
+            $id,
+            'Venue updated: ' . $name
+        );
+
+        header('Location: index.php?page=admin-venues');
+        exit;
+    }
 }

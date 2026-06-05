@@ -72,4 +72,12 @@ $router->get('admin-venues-store', function () use ($adminVenueController) {
     $adminVenueController->store();
 });
 
+$router->get('admin-venues-edit', function () use ($adminVenueController) {
+    $adminVenueController->edit();
+});
+
+$router->get('admin-venues-update', function () use ($adminVenueController) {
+    $adminVenueController->update();
+});
+
 $router->dispatch();
