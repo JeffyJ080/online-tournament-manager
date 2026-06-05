@@ -4,6 +4,7 @@ require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Middleware/RequireAuth.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
+require_once __DIR__ . '/../Models/Payment.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
 
 class AdminRegistrationController extends Controller
@@ -145,6 +146,19 @@ class AdminRegistrationController extends Controller
             $paymentMethod,
             $notes !== '' ? $notes : null
         );
+
+        $paymentModel = new Payment();
+        $payment = $paymentModel->findByRegistrationId($id);
+
+        if ($payment) {
+            $paymentModel->updateStatus(
+                (int) $payment['id'],
+                $paymentStatus,
+                $paymentMethod,
+                Auth::id(),
+                $notes !== '' ? $notes : null
+            );
+        }
 
         $auditLog = new AuditLog();
         $auditLog->create(
