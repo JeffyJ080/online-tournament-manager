@@ -40,4 +40,33 @@ class PublicController extends Controller
             'heading' => 'Contact Mate Tournaments',
         ]);
     }
+
+    public function eventDetails(): void
+    {
+        $slug = trim($_GET['slug'] ?? '');
+
+        if ($slug === '') {
+            header('Location: index.php?page=events');
+            exit;
+        }
+
+        $eventModel = new Event();
+        $event = $eventModel->findBySlug($slug);
+
+        if (!$event || $event['event_status'] !== 'published') {
+            http_response_code(404);
+
+            $this->view('public/404', [
+                'title' => 'Event Not Found',
+                'heading' => 'Event not found',
+            ]);
+            return;
+        }
+
+        $this->view('public/event_details', [
+            'title' => $event['title'],
+            'heading' => $event['title'],
+            'event' => $event,
+        ]);
+    }
 }

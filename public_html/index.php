@@ -80,4 +80,8 @@ $router->get('admin-venues-update', function () use ($adminVenueController) {
     $adminVenueController->update();
 });
 
+$router->get('event', function () use ($publicController) {
+    $publicController->eventDetails();
+});
+
 $router->dispatch();
