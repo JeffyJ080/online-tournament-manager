@@ -88,4 +88,8 @@ $router->get('register-event', function () use ($publicController) {
     $publicController->registerEvent();
 });
 
+$router->get('register-event-submit', function () use ($publicController) {
+    $publicController->storeEventRegistration();
+});
+
 $router->dispatch();
