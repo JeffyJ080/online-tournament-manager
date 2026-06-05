@@ -267,3 +267,21 @@ textarea:focus {
     border-color: rgba(240, 180, 42, 0.75);
     box-shadow: 0 0 0 3px rgba(240, 180, 42, 0.12);
 }
+
+.alert {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-top: 1.5rem;
+    border: 1px solid rgba(216, 226, 240, 0.12);
+}
+
+.alert ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.alert-danger {
+    background: rgba(218, 54, 51, 0.12);
+    border-color: rgba(218, 54, 51, 0.4);
+    color: var(--text);
+}

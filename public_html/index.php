@@ -36,4 +36,8 @@ $router->get('login', function () use ($authController) {
     $authController->showLogin();
 });
 
+$router->get('register-submit', function () use ($authController) {
+    $authController->register();
+});
+
 $router->dispatch();
