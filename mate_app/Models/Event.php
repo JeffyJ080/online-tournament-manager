@@ -99,4 +99,64 @@ class Event extends Model
 
         return $event ?: null;
     }
+
+    public function create(array $data): int
+    {
+        $sql = "
+            INSERT INTO events (
+                series_id,
+                venue_id,
+                title,
+                slug,
+                description,
+                event_date,
+                start_time,
+                end_time,
+                entry_fee,
+                prize_info,
+                format,
+                max_players,
+                registration_status,
+                event_status,
+                poster_path,
+                notes,
+                created_by
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->execute([
+            $data['series_id'] ?? null,
+            $data['venue_id'],
+            $data['title'],
+            $data['slug'],
+            $data['description'] ?? null,
+            $data['event_date'],
+            $data['start_time'],
+            $data['end_time'] ?? null,
+            $data['entry_fee'] ?? 0,
+            $data['prize_info'] ?? null,
+            $data['format'] ?? 'knockout',
+            $data['max_players'] ?? 32,
+            $data['registration_status'] ?? 'open',
+            $data['event_status'] ?? 'draft',
+            $data['poster_path'] ?? null,
+            $data['notes'] ?? null,
+            $data['created_by'] ?? null,
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function slugExists(string $slug): bool
+    {
+        $sql = "SELECT id FROM events WHERE slug = ? LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$slug]);
+
+        return (bool) $stmt->fetch();
+    }
 }
