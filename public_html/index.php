@@ -142,4 +142,12 @@ $router->get('admin-events', function () use ($adminEventController) {
     $adminEventController->index();
 });
 
+$router->get('admin-events-create', function () use ($adminEventController) {
+    $adminEventController->create();
+});
+
+$router->get('admin-events-store', function () use ($adminEventController) {
+    $adminEventController->store();
+});
+
 $router->dispatch();
