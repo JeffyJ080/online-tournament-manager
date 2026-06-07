@@ -303,3 +303,25 @@ CREATE TABLE payment_proofs (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE event_hosts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    assigned_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_event_hosts_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_event_hosts_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_event_hosts_assigned_by
+        FOREIGN KEY (assigned_by) REFERENCES users(id)
+        ON DELETE SET NULL,
+
+    UNIQUE KEY unique_event_host (event_id, user_id)
+);

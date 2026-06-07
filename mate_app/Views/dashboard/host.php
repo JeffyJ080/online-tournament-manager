@@ -35,9 +35,9 @@ $user = $user ?? [];
     <h2>Host tools</h2>
 
     <div class="shortcut-grid">
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=host-events">
             <strong>Assigned Events</strong>
-            <span>Coming soon: view events assigned to you.</span>
+            <span>View and manage events assigned to your account.</span>
         </a>
 
         <a class="shortcut-card is-disabled" href="#">

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../mate_app/Controllers/PaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminPaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Controllers/PlayerRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminEventController.php';
+require_once __DIR__ . '/../mate_app/Controllers/HostEventController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -29,6 +30,7 @@ $paymentProofController = new PaymentProofController();
 $adminPaymentProofController = new AdminPaymentProofController();
 $playerRegistrationController = new PlayerRegistrationController();
 $adminEventController = new AdminEventController();
+$hostEventController = new HostEventController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -160,6 +162,10 @@ $router->get('admin-events-update', function () use ($adminEventController) {
 
 $router->get('venues', function () use ($publicController) {
     $publicController->venues();
+});
+
+$router->get('host-events', function () use ($hostEventController) {
+    $hostEventController->assigned();
 });
 
 $router->dispatch();
