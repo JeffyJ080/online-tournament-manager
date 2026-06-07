@@ -12,10 +12,6 @@ public_html/uploads/*
 !public_html/uploads/payment_proofs/.gitkeep
 !public_html/uploads/event_posters/.gitkeep
 
-# Vendor files can be added manually later
-# If PHPMailer is manually included and you want it in repo, remove this line
-mate_vendor/PHPMailer/
-
 # OS/editor junk
 .DS_Store
 Thumbs.db

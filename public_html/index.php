@@ -130,4 +130,14 @@ $router->get('admin-payment-proofs-update', function () use ($adminPaymentProofC
     $adminPaymentProofController->update();
 });
 
+require_once __DIR__ . '/../mate_app/Core/Mailer.php';
+$router->get('test-mail', function () {
+    $sent = Mailer::sendToAdmin(
+        'Mate Tournaments test email',
+        '<p>This is a test email from the Mate Tournaments website.</p>'
+    );
+
+    echo $sent ? 'Email sent.' : 'Email failed.';
+});
+
 $router->dispatch();
