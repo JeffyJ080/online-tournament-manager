@@ -88,4 +88,17 @@ class Payment extends Model
             $paymentId,
         ]);
     }
+
+    public function markProofUploaded(int $paymentId): bool
+    {
+        $sql = "
+            UPDATE payments
+            SET payment_status = 'proof_uploaded'
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$paymentId]);
+    }
 }

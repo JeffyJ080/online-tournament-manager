@@ -31,6 +31,11 @@ $paymentMethod = $payment_method ?? 'cash';
                 is saved as unpaid until admin verifies payment.
             </p>
         </div>
+        <div class="hero-actions">
+            <a class="btn" href="index.php?page=upload-proof&registration=<?= (int) $registrationId ?>">
+                Upload Proof of Payment
+            </a>
+        </div>
     <?php else: ?>
         <div class="alert">
             <strong>Payment method: Cash</strong>
