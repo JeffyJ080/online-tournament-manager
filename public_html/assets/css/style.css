@@ -576,3 +576,9 @@ button:disabled,
     color: #ff7b72;
     border: 1px solid rgba(218, 54, 51, 0.35);
 }
+
+.table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}

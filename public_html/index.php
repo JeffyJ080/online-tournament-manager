@@ -10,6 +10,7 @@ require_once __DIR__ . '/../mate_app/Controllers/AdminVenueController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Controllers/PaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminPaymentProofController.php';
+require_once __DIR__ . '/../mate_app/Controllers/PlayerRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -25,6 +26,7 @@ $adminVenueController = new AdminVenueController();
 $adminRegistrationController = new AdminRegistrationController();
 $paymentProofController = new PaymentProofController();
 $adminPaymentProofController = new AdminPaymentProofController();
+$playerRegistrationController = new PlayerRegistrationController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -138,6 +140,10 @@ $router->get('test-mail', function () {
     );
 
     echo $sent ? 'Email sent.' : 'Email failed.';
+});
+
+$router->get('my-registrations', function () use ($playerRegistrationController) {
+    $playerRegistrationController->index();
 });
 
 $router->dispatch();

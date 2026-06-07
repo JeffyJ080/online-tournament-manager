@@ -35,6 +35,7 @@ $user = $user ?? [];
     <h2>Next actions</h2>
     <div class="hero-actions">
         <a class="btn" href="index.php?page=events">View Events</a>
+        <a class="btn btn-outline" href="index.php?page=my-registrations">My Registrations</a>
         <a class="btn btn-outline" href="index.php?page=logout">Logout</a>
     </div>
 </section>

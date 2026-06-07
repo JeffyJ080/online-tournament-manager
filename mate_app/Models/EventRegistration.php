@@ -118,10 +118,19 @@ class EventRegistration extends Model
                 events.title AS event_title,
                 events.event_date,
                 events.start_time,
-                venues.name AS venue_name
+                events.slug AS event_slug,
+                venues.name AS venue_name,
+                payments.id AS payment_id,
+                payments.amount,
+                payments.payment_method AS payment_record_method,
+                payments.payment_status AS payment_record_status,
+                payment_proofs.id AS proof_id,
+                payment_proofs.status AS proof_status
             FROM event_registrations
             INNER JOIN events ON event_registrations.event_id = events.id
             INNER JOIN venues ON events.venue_id = venues.id
+            LEFT JOIN payments ON payments.registration_id = event_registrations.id
+            LEFT JOIN payment_proofs ON payment_proofs.registration_id = event_registrations.id
             WHERE event_registrations.user_id = ?
             ORDER BY events.event_date DESC, events.start_time DESC
         ";
