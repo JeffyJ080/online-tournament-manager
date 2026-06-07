@@ -168,4 +168,12 @@ $router->get('host-events', function () use ($hostEventController) {
     $hostEventController->assigned();
 });
 
+$router->get('host-event-registrations', function () use ($hostEventController) {
+    $hostEventController->registrations();
+});
+
+$router->get('host-check-in', function () use ($hostEventController) {
+    $hostEventController->checkIn();
+});
+
 $router->dispatch();

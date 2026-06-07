@@ -98,9 +98,14 @@ class EventRegistration extends Model
     public function forEvent(int $eventId): array
     {
         $sql = "
-            SELECT *
+            SELECT
+                event_registrations.*,
+                payments.payment_status AS payment_record_status,
+                payments.payment_method AS payment_record_method
             FROM event_registrations
-            WHERE event_id = ?
+            LEFT JOIN payments
+                ON payments.registration_id = event_registrations.id
+            WHERE event_registrations.event_id = ?
             ORDER BY registered_at ASC
         ";
 
@@ -290,5 +295,18 @@ class EventRegistration extends Model
         $result = $stmt->fetch();
 
         return (int) ($result['total'] ?? 0);
+    }
+
+    public function checkIn(int $registrationId): bool
+    {
+        $sql = "
+            UPDATE event_registrations
+            SET registration_status = 'checked_in'
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$registrationId]);
     }
 }

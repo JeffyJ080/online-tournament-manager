@@ -35,4 +35,20 @@ class EventHost
 
         return $stmt->fetchAll();
     }
+
+    public function isAssigned(int $eventId, int $userId): bool
+    {
+        $sql = "
+            SELECT id
+            FROM event_hosts
+            WHERE event_id = ?
+            AND user_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$eventId, $userId]);
+
+        return (bool) $stmt->fetch();
+    }
 }
