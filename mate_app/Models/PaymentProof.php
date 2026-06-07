@@ -170,4 +170,20 @@ class PaymentProof extends Model
     {
         return $this->review($proofId, 'rejected', $reviewedBy, $reviewNotes);
     }
+
+    public function countPendingReview(): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM payment_proofs
+            WHERE status = 'uploaded'
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }

@@ -209,4 +209,21 @@ class Event extends Model
             $id,
         ]);
     }
+
+    public function countUpcoming(): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM events
+            WHERE event_date >= CURDATE()
+            AND event_status IN ('published', 'running')
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }

@@ -1,6 +1,10 @@
 <?php
 $heading = $heading ?? 'Admin Dashboard';
 $user = $user ?? [];
+$upcomingEvents = $upcomingEvents ?? 0;
+$openRegistrations = $openRegistrations ?? 0;
+$pendingProofs = $pendingProofs ?? 0;
+$activeVenues = $activeVenues ?? 0;
 ?>
 
 <section class="dashboard-header">
@@ -16,18 +20,23 @@ $user = $user ?? [];
 
 <section class="dashboard-grid">
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $upcomingEvents ?></strong>
         <span>Upcoming Events</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
-        <span>Outstanding Payments</span>
+        <strong><?= (int) $openRegistrations ?></strong>
+        <span>Open Registrations</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
-        <span>Registered Players</span>
+        <strong><?= (int) $pendingProofs ?></strong>
+        <span>Pending Proof Reviews</span>
+    </div>
+
+    <div class="card stat-card">
+        <strong><?= (int) $activeVenues ?></strong>
+        <span>Active Venues</span>
     </div>
 </section>
 

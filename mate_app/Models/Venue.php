@@ -145,4 +145,20 @@ class Venue extends Model
             $id,
         ]);
     }
+
+    public function countActive(): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM venues
+            WHERE status = 'active'
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }

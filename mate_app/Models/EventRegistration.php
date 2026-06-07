@@ -275,4 +275,20 @@ class EventRegistration extends Model
 
         return (int) ($result['total'] ?? 0);
     }
+
+    public function countOpenRegistrations(): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM event_registrations
+            WHERE registration_status IN ('pending', 'confirmed')
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }
