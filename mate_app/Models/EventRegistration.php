@@ -256,4 +256,23 @@ class EventRegistration extends Model
 
         return $stmt->execute([$paymentStatus, $id]);
     }
+
+    public function countUpcomingForUser(int $userId): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM event_registrations
+            INNER JOIN events ON event_registrations.event_id = events.id
+            WHERE event_registrations.user_id = ?
+            AND event_registrations.registration_status NOT IN ('cancelled', 'no_show')
+            AND events.event_date >= CURDATE()
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$userId]);
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }

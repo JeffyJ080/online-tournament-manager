@@ -1,6 +1,9 @@
 <?php
 $heading = $heading ?? 'Player Dashboard';
 $user = $user ?? [];
+$player = $player ?? [];
+$upcomingRegistrations = $upcomingRegistrations ?? 0;
+$matchesPlayed = $matchesPlayed ?? 0;
 ?>
 
 <section class="dashboard-header">
@@ -16,17 +19,17 @@ $user = $user ?? [];
 
 <section class="dashboard-grid">
     <div class="card stat-card">
-        <strong>800</strong>
+        <strong><?= (int) ($player['current_rating'] ?? 800) ?></strong>
         <span>Current Mate Elo</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $upcomingRegistrations ?></strong>
         <span>Upcoming Events</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $matchesPlayed ?></strong>
         <span>Matches Played</span>
     </div>
 </section>

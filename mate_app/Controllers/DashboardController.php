@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
 require_once __DIR__ . '/../Middleware/RequireAuth.php';
+require_once __DIR__ . '/../Models/Player.php';
+require_once __DIR__ . '/../Models/EventRegistration.php';
 
 class DashboardController extends Controller
 {
@@ -38,10 +40,19 @@ class DashboardController extends Controller
 
     public function player(): void
     {
+        $playerModel = new Player();
+        $registrationModel = new EventRegistration();
+
+        $player = $playerModel->findByUserId(Auth::id());
+        $upcomingRegistrations = $registrationModel->countUpcomingForUser(Auth::id());
+
         $this->view('dashboard/player', [
             'title' => 'Player Dashboard',
             'heading' => 'Player Dashboard',
             'user' => Auth::user(),
+            'player' => $player,
+            'upcomingRegistrations' => $upcomingRegistrations,
+            'matchesPlayed' => 0,
         ]);
     }
 
