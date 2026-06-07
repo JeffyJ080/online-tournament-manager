@@ -55,9 +55,9 @@ $user = $user ?? [];
             <span>View the public event listing as players see it.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=admin-events">
             <strong>Events Admin</strong>
-            <span>Coming soon: create and edit events.</span>
+            <span>Create, edit, and manage tournament events.</span>
         </a>
 
         <a class="shortcut-card is-disabled" href="#">

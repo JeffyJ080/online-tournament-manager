@@ -11,6 +11,7 @@ require_once __DIR__ . '/../mate_app/Controllers/AdminRegistrationController.php
 require_once __DIR__ . '/../mate_app/Controllers/PaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminPaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Controllers/PlayerRegistrationController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminEventController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -27,6 +28,7 @@ $adminRegistrationController = new AdminRegistrationController();
 $paymentProofController = new PaymentProofController();
 $adminPaymentProofController = new AdminPaymentProofController();
 $playerRegistrationController = new PlayerRegistrationController();
+$adminEventController = new AdminEventController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -132,18 +134,12 @@ $router->get('admin-payment-proofs-update', function () use ($adminPaymentProofC
     $adminPaymentProofController->update();
 });
 
-require_once __DIR__ . '/../mate_app/Core/Mailer.php';
-$router->get('test-mail', function () {
-    $sent = Mailer::sendToAdmin(
-        'Mate Tournaments test email',
-        '<p>This is a test email from the Mate Tournaments website.</p>'
-    );
-
-    echo $sent ? 'Email sent.' : 'Email failed.';
-});
-
 $router->get('my-registrations', function () use ($playerRegistrationController) {
     $playerRegistrationController->index();
+});
+
+$router->get('admin-events', function () use ($adminEventController) {
+    $adminEventController->index();
 });
 
 $router->dispatch();

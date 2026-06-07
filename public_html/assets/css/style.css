@@ -640,3 +640,17 @@ button:disabled,
         grid-template-columns: 1fr;
     }
 }
+
+.status-draft {
+    background: rgba(125, 142, 168, 0.14);
+    color: var(--muted);
+    border: 1px solid rgba(125, 142, 168, 0.35);
+}
+
+.status-published,
+.status-running,
+.status-completed {
+    background: rgba(46, 160, 67, 0.14);
+    color: #7ee787;
+    border: 1px solid rgba(46, 160, 67, 0.35);
+}

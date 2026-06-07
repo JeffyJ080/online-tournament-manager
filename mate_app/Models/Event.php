@@ -9,10 +9,17 @@ class Event extends Model
         $sql = "
             SELECT
                 events.*,
+                event_series.title AS series_title,
                 venues.name AS venue_name,
-                venues.city AS venue_city
+                venues.city AS venue_city,
+                COUNT(event_registrations.id) AS active_registrations
             FROM events
             INNER JOIN venues ON events.venue_id = venues.id
+            LEFT JOIN event_series ON events.series_id = event_series.id
+            LEFT JOIN event_registrations
+                ON event_registrations.event_id = events.id
+                AND event_registrations.registration_status IN ('pending', 'confirmed', 'checked_in')
+            GROUP BY events.id
             ORDER BY events.event_date DESC, events.start_time DESC
         ";
 
