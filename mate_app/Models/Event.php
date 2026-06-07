@@ -166,4 +166,47 @@ class Event extends Model
 
         return (bool) $stmt->fetch();
     }
+    
+    public function update(int $id, array $data): bool
+    {
+        $sql = "
+            UPDATE events
+            SET
+                series_id = ?,
+                venue_id = ?,
+                title = ?,
+                description = ?,
+                event_date = ?,
+                start_time = ?,
+                end_time = ?,
+                entry_fee = ?,
+                prize_info = ?,
+                format = ?,
+                max_players = ?,
+                registration_status = ?,
+                event_status = ?,
+                notes = ?
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            $data['series_id'],
+            $data['venue_id'],
+            $data['title'],
+            $data['description'],
+            $data['event_date'],
+            $data['start_time'],
+            $data['end_time'],
+            $data['entry_fee'],
+            $data['prize_info'],
+            $data['format'],
+            $data['max_players'],
+            $data['registration_status'],
+            $data['event_status'],
+            $data['notes'],
+            $id,
+        ]);
+    }
 }

@@ -150,4 +150,12 @@ $router->get('admin-events-store', function () use ($adminEventController) {
     $adminEventController->store();
 });
 
+$router->get('admin-events-edit', function () use ($adminEventController) {
+    $adminEventController->edit();
+});
+
+$router->get('admin-events-update', function () use ($adminEventController) {
+    $adminEventController->update();
+});
+
 $router->dispatch();
