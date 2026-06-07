@@ -126,4 +126,48 @@ class PaymentProof extends Model
             $proofId,
         ]);
     }
+
+    public function findByIdWithDetails(int $id): ?array
+    {
+        $sql = "
+            SELECT
+                payment_proofs.*,
+                payments.amount,
+                payments.payment_method,
+                payments.payment_status,
+                event_registrations.full_name,
+                event_registrations.email,
+                event_registrations.phone,
+                event_registrations.event_id,
+                event_registrations.registration_status,
+                event_registrations.payment_status AS registration_payment_status,
+                events.title AS event_title,
+                events.event_date,
+                venues.name AS venue_name
+            FROM payment_proofs
+            INNER JOIN payments ON payment_proofs.payment_id = payments.id
+            INNER JOIN event_registrations ON payment_proofs.registration_id = event_registrations.id
+            INNER JOIN events ON event_registrations.event_id = events.id
+            INNER JOIN venues ON events.venue_id = venues.id
+            WHERE payment_proofs.id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+
+        $proof = $stmt->fetch();
+
+        return $proof ?: null;
+    }
+
+    public function approve(int $proofId, int $reviewedBy, ?string $reviewNotes = null): bool
+    {
+        return $this->review($proofId, 'approved', $reviewedBy, $reviewNotes);
+    }
+
+    public function reject(int $proofId, int $reviewedBy, ?string $reviewNotes = null): bool
+    {
+        return $this->review($proofId, 'rejected', $reviewedBy, $reviewNotes);
+    }
 }

@@ -9,6 +9,7 @@ require_once __DIR__ . '/../mate_app/Controllers/DashboardController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminVenueController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Controllers/PaymentProofController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminPaymentProofController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -23,6 +24,8 @@ $dashboardController = new DashboardController();
 $adminVenueController = new AdminVenueController();
 $adminRegistrationController = new AdminRegistrationController();
 $paymentProofController = new PaymentProofController();
+$adminPaymentProofController = new AdminPaymentProofController();
+
 $router->get('home', function () use ($publicController) {
     $publicController->home();
 });
@@ -113,6 +116,18 @@ $router->get('upload-proof', function () use ($paymentProofController) {
 
 $router->get('upload-proof-submit', function () use ($paymentProofController) {
     $paymentProofController->store();
+});
+
+$router->get('admin-payment-proofs', function () use ($adminPaymentProofController) {
+    $adminPaymentProofController->index();
+});
+
+$router->get('admin-payment-proofs-review', function () use ($adminPaymentProofController) {
+    $adminPaymentProofController->review();
+});
+
+$router->get('admin-payment-proofs-update', function () use ($adminPaymentProofController) {
+    $adminPaymentProofController->update();
 });
 
 $router->dispatch();

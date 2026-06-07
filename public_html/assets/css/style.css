@@ -558,3 +558,21 @@ button:disabled,
     color: var(--muted);
     border: 1px solid rgba(125, 142, 168, 0.35);
 }
+
+.status-uploaded {
+    background: rgba(125, 142, 168, 0.14);
+    color: var(--muted);
+    border: 1px solid rgba(125, 142, 168, 0.35);
+}
+
+.status-approved {
+    background: rgba(46, 160, 67, 0.14);
+    color: #7ee787;
+    border: 1px solid rgba(46, 160, 67, 0.35);
+}
+
+.status-rejected {
+    background: rgba(218, 54, 51, 0.12);
+    color: #ff7b72;
+    border: 1px solid rgba(218, 54, 51, 0.35);
+}
