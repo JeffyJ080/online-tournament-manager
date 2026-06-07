@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Core/Database.php';
+require_once __DIR__ . '/../Core/Mailer.php';
 require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Player.php';
@@ -286,6 +287,57 @@ class PublicController extends Controller
                 'payment',
                 $paymentId,
                 'Payment record created for registration #' . $registrationId
+            );
+
+            $playerEmailBody = '
+                <p>Hi ' . htmlspecialchars($fullName) . ',</p>
+
+                <p>Your registration for <strong>' . htmlspecialchars($event['title']) . '</strong> has been received.</p>
+
+                <p>
+                    <strong>Venue:</strong> ' . htmlspecialchars($event['venue_name']) . '<br>
+                    <strong>Date:</strong> ' . htmlspecialchars(date('D, d M Y', strtotime($event['event_date']))) . '<br>
+                    <strong>Time:</strong> ' . htmlspecialchars(date('H:i', strtotime($event['start_time']))) . '<br>
+                    <strong>Payment method:</strong> ' . htmlspecialchars(ucwords($paymentMethod)) . '
+                </p>
+
+                <p>Your registration reference is <strong>#' . (int) $registrationId . '</strong>.</p>
+            ';
+
+            if ($paymentMethod === 'eft') {
+                $playerEmailBody .= '
+                    <p>Please upload your proof of payment so admin can verify your spot.</p>
+                ';
+            } else {
+                $playerEmailBody .= '
+                    <p>Please pay at the event during check-in.</p>
+                ';
+            }
+
+            Mailer::send(
+                $email,
+                'Registration received - ' . $event['title'],
+                $playerEmailBody,
+                $fullName
+            );
+
+            $adminEmailBody = '
+                <p>A new event registration was created.</p>
+
+                <p>
+                    <strong>Event:</strong> ' . htmlspecialchars($event['title']) . '<br>
+                    <strong>Venue:</strong> ' . htmlspecialchars($event['venue_name']) . '<br>
+                    <strong>Player:</strong> ' . htmlspecialchars($fullName) . '<br>
+                    <strong>Email:</strong> ' . htmlspecialchars($email) . '<br>
+                    <strong>Phone:</strong> ' . htmlspecialchars($phone !== '' ? $phone : '-') . '<br>
+                    <strong>Payment method:</strong> ' . htmlspecialchars(ucwords($paymentMethod)) . '<br>
+                    <strong>Registration reference:</strong> #' . (int) $registrationId . '
+                </p>
+            ';
+
+            Mailer::sendToAdmin(
+                'New registration - ' . $event['title'],
+                $adminEmailBody
             );
 
             $db->commit();
