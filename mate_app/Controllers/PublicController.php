@@ -9,6 +9,7 @@ require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
 require_once __DIR__ . '/../Models/Payment.php';
+require_once __DIR__ . '/../Models/Venue.php';
 
 class PublicController extends Controller
 {
@@ -362,6 +363,18 @@ class PublicController extends Controller
             'event' => $event,
             'registration_id' => $registrationId,
             'payment_method' => $paymentMethod,
+        ]);
+    }
+    
+    public function venues(): void
+    {
+        $venueModel = new Venue();
+        $venues = $venueModel->active();
+
+        $this->view('public/venues', [
+            'title' => 'Venues',
+            'heading' => 'Our Venues',
+            'venues' => $venues,
         ]);
     }
 }

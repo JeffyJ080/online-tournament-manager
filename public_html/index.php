@@ -158,4 +158,8 @@ $router->get('admin-events-update', function () use ($adminEventController) {
     $adminEventController->update();
 });
 
+$router->get('venues', function () use ($publicController) {
+    $publicController->venues();
+});
+
 $router->dispatch();
