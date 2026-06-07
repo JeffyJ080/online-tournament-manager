@@ -33,7 +33,26 @@ $user = $user ?? [];
 
 <section class="card">
     <h2>Venue overview</h2>
-    <p>
-        Restaurant-facing stats will go here without showing internal Mate profit.
-    </p>
+
+    <div class="shortcut-grid">
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Upcoming Events</strong>
+            <span>Coming soon: view events scheduled at your venue.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Attendance Stats</strong>
+            <span>Coming soon: track event turnout over time.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Past Events</strong>
+            <span>Coming soon: see previous Mate events hosted here.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Venue Profile</strong>
+            <span>Coming soon: review venue contact and event details.</span>
+        </a>
+    </div>
 </section>

@@ -582,3 +582,61 @@ button:disabled,
     flex-wrap: wrap;
     gap: 0.5rem;
 }
+
+.shortcut-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.shortcut-card {
+    display: block;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    background: rgba(8, 13, 26, 0.46);
+    border: 1px solid rgba(216, 226, 240, 0.08);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.shortcut-card strong {
+    display: block;
+    color: var(--gold-bright);
+    margin-bottom: 0.4rem;
+}
+
+.shortcut-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.shortcut-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(240, 180, 42, 0.45);
+    background: rgba(240, 180, 42, 0.06);
+}
+
+.shortcut-card.is-disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+}
+
+.shortcut-card.is-disabled:hover {
+    transform: none;
+    border-color: rgba(216, 226, 240, 0.08);
+    background: rgba(8, 13, 26, 0.46);
+}
+
+@media (max-width: 1050px) {
+    .shortcut-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .shortcut-grid {
+        grid-template-columns: 1fr;
+    }
+}

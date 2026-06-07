@@ -33,9 +33,26 @@ $user = $user ?? [];
 
 <section class="card">
     <h2>Next actions</h2>
-    <div class="hero-actions">
-        <a class="btn" href="index.php?page=events">View Events</a>
-        <a class="btn btn-outline" href="index.php?page=my-registrations">My Registrations</a>
-        <a class="btn btn-outline" href="index.php?page=logout">Logout</a>
+
+    <div class="shortcut-grid">
+        <a class="shortcut-card" href="index.php?page=my-registrations">
+            <strong>My Registrations</strong>
+            <span>View bookings, payment status, and upload proof of payment.</span>
+        </a>
+
+        <a class="shortcut-card" href="index.php?page=events">
+            <strong>Find Events</strong>
+            <span>Browse upcoming Mate Tournaments events.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>My Rating</strong>
+            <span>Coming soon: view your Mate Elo and rating history.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Match History</strong>
+            <span>Coming soon: view your played matches and results.</span>
+        </a>
     </div>
 </section>

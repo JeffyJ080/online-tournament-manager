@@ -33,7 +33,26 @@ $user = $user ?? [];
 
 <section class="card">
     <h2>Host tools</h2>
-    <p>
-        Event check-in, walk-ins, payment status, tournament control, and result entry will be added here.
-    </p>
+
+    <div class="shortcut-grid">
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Assigned Events</strong>
+            <span>Coming soon: view events assigned to you.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Check-in</strong>
+            <span>Coming soon: check players in on event night.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Walk-ins</strong>
+            <span>Coming soon: add players at the venue.</span>
+        </a>
+
+        <a class="shortcut-card is-disabled" href="#">
+            <strong>Enter Results</strong>
+            <span>Coming soon: submit match and round results.</span>
+        </a>
+    </div>
 </section>

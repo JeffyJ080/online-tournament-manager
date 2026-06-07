@@ -21,8 +21,6 @@ $pageTitle = $title ?? $appConfig['app_name'];
         <ul>
             <li><a href="<?= url('home') ?>">Home</a></li>
             <li><a href="<?= url('events') ?>">Events</a></li>
-            <li><a href="<?= url('leaderboards') ?>">Leaderboards</a></li>
-            <li><a href="<?= url('venues') ?>">Venues</a></li>
             <li><a href="<?= url('about') ?>">About</a></li>
             <li><a href="<?= url('contact') ?>">Contact</a></li>
             <?php if (Auth::check()): ?>
