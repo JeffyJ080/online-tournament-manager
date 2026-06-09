@@ -176,4 +176,8 @@ $router->get('host-check-in', function () use ($hostEventController) {
     $hostEventController->checkIn();
 });
 
+$router->get('host-walk-in', function () use ($hostEventController) {
+    $hostEventController->addWalkIn();
+});
+
 $router->dispatch();
