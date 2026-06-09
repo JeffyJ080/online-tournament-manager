@@ -325,3 +325,30 @@ CREATE TABLE event_hosts (
 
     UNIQUE KEY unique_event_host (event_id, user_id)
 );
+
+CREATE TABLE event_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    submitted_by INT NULL,
+
+    attendance_count INT NOT NULL DEFAULT 0,
+    cash_collected DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    cash_handed_over DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+
+    winner_notes TEXT NULL,
+    issue_notes TEXT NULL,
+    general_notes TEXT NULL,
+
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_event_reports_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_event_reports_submitted_by
+        FOREIGN KEY (submitted_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);

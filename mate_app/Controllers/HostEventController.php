@@ -8,6 +8,7 @@ require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Payment.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
+require_once __DIR__ . '/../Models/EventReport.php';
 
 class HostEventController extends Controller
 {
@@ -249,6 +250,152 @@ class HostEventController extends Controller
             'event_registration',
             $registrationId,
             'Walk-in player added to event #' . $eventId . ': ' . $fullName
+        );
+
+        header('Location: index.php?page=host-event-registrations&id=' . $eventId);
+        exit;
+    }
+
+    public function report(): void
+    {
+        RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
+
+        $eventId = (int) ($_GET['id'] ?? 0);
+
+        if ($eventId <= 0) {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $hostModel = new EventHost();
+
+        if (
+            !Auth::hasAnyRole(['admin', 'super_admin']) &&
+            !$hostModel->isAssigned($eventId, Auth::id())
+        ) {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
+        $eventModel = new Event();
+        $event = $eventModel->findById($eventId);
+
+        if (!$event) {
+            http_response_code(404);
+            echo '<h1>404 - Event not found</h1>';
+            return;
+        }
+
+        $reportModel = new EventReport();
+        $existingReport = $reportModel->findByEventId($eventId);
+
+        $this->view('host/event_report', [
+            'title' => 'Submit Event Report',
+            'heading' => 'Submit Event Report',
+            'event' => $event,
+            'existingReport' => $existingReport,
+            'errors' => [],
+            'old' => $existingReport ?? [],
+        ]);
+    }
+
+    public function storeReport(): void
+    {
+        RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        $attendanceCount = (int) ($_POST['attendance_count'] ?? 0);
+        $cashCollected = trim($_POST['cash_collected'] ?? '0');
+        $cashHandedOver = trim($_POST['cash_handed_over'] ?? '0');
+        $winnerNotes = trim($_POST['winner_notes'] ?? '');
+        $issueNotes = trim($_POST['issue_notes'] ?? '');
+        $generalNotes = trim($_POST['general_notes'] ?? '');
+
+        $errors = [];
+
+        if ($eventId <= 0) {
+            $errors[] = 'Invalid event selected.';
+        }
+
+        if ($attendanceCount < 0) {
+            $errors[] = 'Attendance count cannot be negative.';
+        }
+
+        if (!is_numeric($cashCollected) || (float) $cashCollected < 0) {
+            $errors[] = 'Cash collected must be a valid amount.';
+        }
+
+        if (!is_numeric($cashHandedOver) || (float) $cashHandedOver < 0) {
+            $errors[] = 'Cash handed over must be a valid amount.';
+        }
+
+        $hostModel = new EventHost();
+
+        if (
+            !Auth::hasAnyRole(['admin', 'super_admin']) &&
+            !$hostModel->isAssigned($eventId, Auth::id())
+        ) {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
+        $eventModel = new Event();
+        $event = $eventModel->findById($eventId);
+
+        if (!$event) {
+            http_response_code(404);
+            echo '<h1>404 - Event not found</h1>';
+            return;
+        }
+
+        $old = [
+            'attendance_count' => $attendanceCount,
+            'cash_collected' => $cashCollected,
+            'cash_handed_over' => $cashHandedOver,
+            'winner_notes' => $winnerNotes,
+            'issue_notes' => $issueNotes,
+            'general_notes' => $generalNotes,
+        ];
+
+        if (!empty($errors)) {
+            $this->view('host/event_report', [
+                'title' => 'Submit Event Report',
+                'heading' => 'Submit Event Report',
+                'event' => $event,
+                'existingReport' => null,
+                'errors' => $errors,
+                'old' => $old,
+            ]);
+            return;
+        }
+
+        $reportModel = new EventReport();
+
+        $reportId = $reportModel->create([
+            'event_id' => $eventId,
+            'submitted_by' => Auth::id(),
+            'attendance_count' => $attendanceCount,
+            'cash_collected' => (float) $cashCollected,
+            'cash_handed_over' => (float) $cashHandedOver,
+            'winner_notes' => $winnerNotes !== '' ? $winnerNotes : null,
+            'issue_notes' => $issueNotes !== '' ? $issueNotes : null,
+            'general_notes' => $generalNotes !== '' ? $generalNotes : null,
+        ]);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            Auth::id(),
+            'event_report_submitted',
+            'event_report',
+            $reportId,
+            'Event report submitted for event #' . $eventId
         );
 
         header('Location: index.php?page=host-event-registrations&id=' . $eventId);

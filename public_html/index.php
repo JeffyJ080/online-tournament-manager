@@ -180,4 +180,12 @@ $router->get('host-walk-in', function () use ($hostEventController) {
     $hostEventController->addWalkIn();
 });
 
+$router->get('host-event-report', function () use ($hostEventController) {
+    $hostEventController->report();
+});
+
+$router->get('host-event-report-store', function () use ($hostEventController) {
+    $hostEventController->storeReport();
+});
+
 $router->dispatch();

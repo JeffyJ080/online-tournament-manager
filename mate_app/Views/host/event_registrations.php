@@ -145,6 +145,10 @@ function hostRegLabel(?string $value): string
             </p>
         </div>
 
+        <a class="btn" href="index.php?page=host-event-report&id=<?= (int) ($event['id'] ?? 0) ?>">
+            Submit Report
+        </a>
+
         <a class="btn btn-outline" href="index.php?page=host-events">
             Back
         </a>
