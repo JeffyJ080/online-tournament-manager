@@ -13,6 +13,7 @@ require_once __DIR__ . '/../mate_app/Controllers/AdminPaymentProofController.php
 require_once __DIR__ . '/../mate_app/Controllers/PlayerRegistrationController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminEventController.php';
 require_once __DIR__ . '/../mate_app/Controllers/HostEventController.php';
+require_once __DIR__ . '/../mate_app/Controllers/TournamentManagerController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
@@ -31,6 +32,7 @@ $adminPaymentProofController = new AdminPaymentProofController();
 $playerRegistrationController = new PlayerRegistrationController();
 $adminEventController = new AdminEventController();
 $hostEventController = new HostEventController();
+$tournamentManagerController = new TournamentManagerController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -186,6 +188,14 @@ $router->get('host-event-report', function () use ($hostEventController) {
 
 $router->get('host-event-report-store', function () use ($hostEventController) {
     $hostEventController->storeReport();
+});
+
+$router->get('tournament-manager', function () use ($tournamentManagerController) {
+    $tournamentManagerController->index();
+});
+
+$router->get('tournament-create', function () use ($tournamentManagerController) {
+    $tournamentManagerController->create();
 });
 
 $router->dispatch();

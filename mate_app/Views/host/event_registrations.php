@@ -136,6 +136,8 @@ function hostRegLabel(?string $value): string
     </form>
 </section>
 
+<br/>
+
 <section class="card">
     <div class="section-header">
         <div>
@@ -144,6 +146,10 @@ function hostRegLabel(?string $value): string
                 <?= count($registrations) ?> total registrations
             </p>
         </div>
+
+        <a class="btn" href="index.php?page=tournament-manager&id=<?= (int) ($event['id'] ?? 0) ?>">
+            Tournament Manager
+        </a>
 
         <a class="btn" href="index.php?page=host-event-report&id=<?= (int) ($event['id'] ?? 0) ?>">
             Submit Report
