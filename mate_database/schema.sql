@@ -352,3 +352,95 @@ CREATE TABLE event_reports (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE tournaments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+
+    format ENUM('knockout', 'swiss', 'round_robin', 'weekly_points', 'team', 'doubles') NOT NULL,
+    status ENUM('setup', 'running', 'completed', 'cancelled') NOT NULL DEFAULT 'setup',
+
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+
+    notes TEXT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_tournaments_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE rounds (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tournament_id INT NOT NULL,
+
+    round_number INT NOT NULL,
+    name VARCHAR(100) NULL,
+    status ENUM('pending', 'running', 'completed') NOT NULL DEFAULT 'pending',
+
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_rounds_tournament
+        FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    UNIQUE KEY unique_tournament_round (tournament_id, round_number)
+);
+
+CREATE TABLE matches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    tournament_id INT NOT NULL,
+    round_id INT NULL,
+
+    white_registration_id INT NULL,
+    black_registration_id INT NULL,
+
+    white_score DECIMAL(3,1) NULL,
+    black_score DECIMAL(3,1) NULL,
+
+    result ENUM('white_win', 'black_win', 'draw', 'bye', 'forfeit', 'pending') NOT NULL DEFAULT 'pending',
+
+    board_number INT NULL,
+    status ENUM('scheduled', 'running', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
+
+    reported_by INT NULL,
+    reported_at DATETIME NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_matches_tournament
+        FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_matches_round
+        FOREIGN KEY (round_id) REFERENCES rounds(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_matches_white_registration
+        FOREIGN KEY (white_registration_id) REFERENCES event_registrations(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_matches_black_registration
+        FOREIGN KEY (black_registration_id) REFERENCES event_registrations(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_matches_reported_by
+        FOREIGN KEY (reported_by) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
