@@ -3,6 +3,7 @@ $event = $event ?? [];
 $tournament = $tournament ?? null;
 $checkedInPlayers = $checkedInPlayers ?? [];
 $participants = $participants ?? [];
+$rounds = $rounds ?? [];
 
 function tmLabel(?string $value): string
 {
@@ -178,6 +179,54 @@ function tmLabel(?string $value): string
                                     Checked In
                                 </span>
                             </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
+
+<br/>
+
+<section class="card">
+    <div class="section-header">
+        <div>
+            <h2>Rounds</h2>
+            <p>Swiss rounds will appear here once generated.</p>
+        </div>
+    </div>
+
+    <?php if (empty($rounds)): ?>
+        <p>No rounds generated yet.</p>
+    <?php else: ?>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Round</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Completed</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($rounds as $round): ?>
+                        <tr>
+                            <td>
+                                <strong><?= htmlspecialchars($round['name'] ?? 'Round ' . $round['round_number']) ?></strong>
+                            </td>
+
+                            <td>
+                                <span class="status-pill status-<?= htmlspecialchars($round['status']) ?>">
+                                    <?= htmlspecialchars(tmLabel($round['status'])) ?>
+                                </span>
+                            </td>
+
+                            <td><?= htmlspecialchars($round['started_at'] ?? '-') ?></td>
+
+                            <td><?= htmlspecialchars($round['completed_at'] ?? '-') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

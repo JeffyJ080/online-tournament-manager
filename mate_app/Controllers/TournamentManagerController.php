@@ -9,6 +9,7 @@ require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Tournament.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Models/TournamentParticipant.php';
+require_once __DIR__ . '/../Models/Round.php';
 
 class TournamentManagerController extends Controller
 {
@@ -59,12 +60,20 @@ class TournamentManagerController extends Controller
             $participants = $participantModel->forTournament((int) $tournament['id']);
         }
 
+        $rounds = [];
+
+        if ($tournament) {
+            $roundModel = new Round();
+            $rounds = $roundModel->forTournament((int) $tournament['id']);
+        }
+
         $this->view('tournament/manager', [
             'title' => 'Tournament Manager',
             'heading' => 'Tournament Manager',
 
             'event' => $event,
             'tournament' => $tournament,
+            'rounds' => $rounds,
             'participants' => $participants,
             'checkedInPlayers' => $checkedInPlayers,
         ]);
