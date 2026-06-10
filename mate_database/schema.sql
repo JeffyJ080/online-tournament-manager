@@ -472,3 +472,7 @@ CREATE TABLE tournament_participants (
 
     UNIQUE KEY unique_tournament_registration (tournament_id, event_registration_id)
 );
+
+ALTER TABLE tournaments
+ADD COLUMN total_rounds INT NOT NULL DEFAULT 5 AFTER status,
+ADD COLUMN current_round INT NOT NULL DEFAULT 0 AFTER total_rounds;

@@ -39,6 +39,16 @@ function tmLabel(?string $value): string
         </strong>
         <span>Tournament Status</span>
     </div>
+
+    <div class="card stat-card">
+        <strong><?= (int) ($tournament['total_rounds'] ?? 5) ?></strong>
+        <span>Total Rounds</span>
+    </div>
+
+    <div class="card stat-card">
+        <strong><?= (int) ($tournament['current_round'] ?? 0) ?></strong>
+        <span>Current Round</span>
+    </div>
 </section>
 
 <?php if (!$tournament): ?>

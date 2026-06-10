@@ -28,9 +28,11 @@ class Tournament extends Model
                 event_id,
                 format,
                 status,
-                notes
+                notes,
+                total_rounds,
+                current_round
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         ";
 
         $stmt = $this->db->prepare($sql);
@@ -39,9 +41,24 @@ class Tournament extends Model
             $data['event_id'],
             $data['format'],
             $data['status'] ?? 'setup',
+            $data['total_rounds'] ?? 5,
+            $data['current_round'] ?? 0,
             $data['notes'] ?? null,
         ]);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    public function updateSettings(int $id, int $totalRounds): bool
+    {
+        $sql = "
+            UPDATE tournaments
+            SET total_rounds = ?
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$totalRounds, $id]);
     }
 }

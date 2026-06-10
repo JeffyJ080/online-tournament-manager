@@ -115,6 +115,8 @@ class TournamentManagerController extends Controller
                 'event_id' => $eventId,
                 'format' => $event['format'],
                 'status' => 'setup',
+                'total_rounds' => 5,
+                'current_round' => 0,
                 'notes' => 'Tournament created from event manager.',
             ]);
 
