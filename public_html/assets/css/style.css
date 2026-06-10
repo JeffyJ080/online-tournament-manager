@@ -671,3 +671,16 @@ button:disabled,
         grid-template-columns: 1fr;
     }
 }
+
+.status-active {
+    background: rgba(46, 160, 67, 0.14);
+    color: #7ee787;
+    border: 1px solid rgba(46, 160, 67, 0.35);
+}
+
+.status-eliminated,
+.status-withdrawn {
+    background: rgba(218, 54, 51, 0.12);
+    color: #ff7b72;
+    border: 1px solid rgba(218, 54, 51, 0.35);
+}

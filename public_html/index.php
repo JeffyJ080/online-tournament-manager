@@ -198,4 +198,8 @@ $router->get('tournament-create', function () use ($tournamentManagerController)
     $tournamentManagerController->create();
 });
 
+$router->get('tournament-import-participants', function () use ($tournamentManagerController) {
+    $tournamentManagerController->importParticipants();
+});
+
 $router->dispatch();

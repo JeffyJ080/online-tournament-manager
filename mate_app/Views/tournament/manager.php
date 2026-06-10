@@ -2,6 +2,7 @@
 $event = $event ?? [];
 $tournament = $tournament ?? null;
 $checkedInPlayers = $checkedInPlayers ?? [];
+$participants = $participants ?? [];
 
 function tmLabel(?string $value): string
 {
@@ -57,6 +58,70 @@ function tmLabel(?string $value): string
         </form>
     </section>
 <?php endif; ?>
+
+<?php if ($tournament): ?>
+    <section class="card">
+        <div class="section-header">
+            <div>
+                <h2>Tournament Participants</h2>
+                <p>
+                    Import checked-in players into the tournament player pool.
+                </p>
+            </div>
+
+            <form method="POST" action="index.php?page=tournament-import-participants">
+                <input type="hidden" name="event_id" value="<?= (int) ($event['id'] ?? 0) ?>">
+                <button class="btn" type="submit">Import Checked-in Players</button>
+            </form>
+        </div>
+
+        <?php if (empty($participants)): ?>
+            <p>No participants imported yet.</p>
+        <?php else: ?>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Seed</th>
+                            <th>Player</th>
+                            <th>Rating</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <?php foreach ($participants as $participant): ?>
+                            <tr>
+                                <td><?= (int) ($participant['seed_number'] ?? 0) ?></td>
+
+                                <td>
+                                    <strong>
+                                        <?= htmlspecialchars($participant['display_name'] ?: $participant['full_name']) ?>
+                                    </strong>
+                                    <br>
+                                    <span class="muted"><?= htmlspecialchars($participant['email']) ?></span>
+                                </td>
+
+                                <td><?= (int) ($participant['starting_rating'] ?? 0) ?></td>
+
+                                <td><?= htmlspecialchars((string) ($participant['current_score'] ?? '0.0')) ?></td>
+
+                                <td>
+                                    <span class="status-pill status-<?= htmlspecialchars($participant['status']) ?>">
+                                        <?= htmlspecialchars(tmLabel($participant['status'])) ?>
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </section>
+<?php endif; ?>
+
+<br/>
 
 <section class="card">
     <div class="section-header">

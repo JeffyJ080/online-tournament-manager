@@ -444,3 +444,31 @@ CREATE TABLE matches (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
+CREATE TABLE tournament_participants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    tournament_id INT NOT NULL,
+    event_registration_id INT NOT NULL,
+
+    seed_number INT NULL,
+    starting_rating INT NULL,
+    current_score DECIMAL(4,1) NOT NULL DEFAULT 0.0,
+
+    status ENUM('active', 'eliminated', 'withdrawn') NOT NULL DEFAULT 'active',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_tournament_participants_tournament
+        FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_tournament_participants_registration
+        FOREIGN KEY (event_registration_id) REFERENCES event_registrations(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    UNIQUE KEY unique_tournament_registration (tournament_id, event_registration_id)
+);
