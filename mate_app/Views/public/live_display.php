@@ -122,6 +122,23 @@ $roundMinutes = max(1, min(240, (int) ($_GET['minutes'] ?? 20)));
         display: grid;
     }
 
+    .pairing-head {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr) 80px minmax(0, 1fr) 130px;
+        gap: 0.75rem;
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid rgba(216, 226, 240, 0.08);
+        color: var(--gold-bright);
+        font-size: 0.85rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .pairing-head .result-head {
+        text-align: right;
+    }
+
     .standing-row,
     .pairing-row {
         display: grid;
@@ -199,6 +216,13 @@ $roundMinutes = max(1, min(240, (int) ($_GET['minutes'] ?? 20)));
             grid-template-columns: 64px minmax(0, 1fr);
         }
 
+        .pairing-head {
+            grid-template-columns: 64px minmax(0, 1fr);
+        }
+
+        .pairing-head .versus-head,
+        .pairing-head .black-head,
+        .pairing-head .result-head,
         .pairing-row .versus,
         .pairing-row .result {
             display: none;
@@ -235,6 +259,13 @@ $roundMinutes = max(1, min(240, (int) ($_GET['minutes'] ?? 20)));
             <div class="display-panel-header">
                 <h2>Pairings</h2>
                 <span class="display-note">Current round</span>
+            </div>
+            <div class="pairing-head">
+                <span>Board</span>
+                <span>White</span>
+                <span class="versus-head"></span>
+                <span class="black-head">Black</span>
+                <span class="result-head">Result</span>
             </div>
             <div class="display-list" id="pairings-list"></div>
         </section>
