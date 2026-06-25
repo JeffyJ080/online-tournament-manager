@@ -1,12 +1,14 @@
 <?php
 
 require_once __DIR__ . '/../Core/Controller.php';
+require_once __DIR__ . '/../Core/Mailer.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
 require_once __DIR__ . '/../Middleware/RequireAuth.php';
 require_once __DIR__ . '/../Models/User.php';
 require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
+require_once __DIR__ . '/../Models/PasswordReset.php';
 
 class ProfileController extends Controller
 {
@@ -105,46 +107,48 @@ class ProfileController extends Controller
             exit;
         }
 
-        $currentPassword = $_POST['current_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $newPasswordConfirm = $_POST['new_password_confirm'] ?? '';
-
-        $errors = [];
         $userModel = new User();
         $user = $userModel->findById(Auth::id());
 
-        if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
-            $errors[] = 'Current password is incorrect.';
+        if ($user && ($user['status'] ?? '') === 'active') {
+            $this->sendResetEmail((int) $user['id'], $user['email']);
         }
 
-        if (strlen($newPassword) < 8) {
-            $errors[] = 'New password must be at least 8 characters.';
-        }
-
-        if ($newPassword !== $newPasswordConfirm) {
-            $errors[] = 'New passwords do not match.';
-        }
-
-        if (!empty($errors)) {
-            $this->renderWithErrors([], $errors);
-            return;
-        }
-
-        $userModel->updatePassword(Auth::id(), $newPassword);
-
-        $auditLog = new AuditLog();
-        $auditLog->create(
-            Auth::id(),
-            'password_changed',
-            'user',
-            Auth::id(),
-            'User changed their password.'
-        );
-
-        $_SESSION['profile_success'] = 'Password changed.';
+        $_SESSION['profile_success'] = 'Password reset link sent to your email.';
 
         header('Location: index.php?page=my-profile');
         exit;
+    }
+
+    private function sendResetEmail(int $userId, string $email): bool
+    {
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = new DateTime('+1 hour');
+
+        $resetModel = new PasswordReset();
+        $resetModel->create($userId, $token, $expiresAt);
+
+        $appConfig = require __DIR__ . '/../../mate_config/app.php';
+        $resetUrl = rtrim($appConfig['app_url'], '/') . '/index.php?page=reset-password&token=' . urlencode($token);
+
+        $body = '
+            <p>A password reset was requested for your Mate Tournaments account.</p>
+            <p><a href="' . htmlspecialchars($resetUrl) . '">Reset your password</a></p>
+            <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+        ';
+
+        $sent = Mailer::send($email, 'Reset your Mate Tournaments password', $body);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            $userId,
+            'password_reset_requested',
+            'user',
+            $userId,
+            'Password reset email requested from profile.'
+        );
+
+        return $sent;
     }
 
     private function renderWithErrors(array $profileErrors, array $passwordErrors): void

@@ -3,7 +3,6 @@ $user = $user ?? [];
 $player = $player ?? null;
 $registrations = $registrations ?? [];
 $profileErrors = $profileErrors ?? [];
-$passwordErrors = $passwordErrors ?? [];
 $success = $success ?? null;
 
 function profileValue(?array $player, string $key): string
@@ -101,35 +100,11 @@ function profileSelected(?array $player, string $value): string
     <div class="card">
         <h2>Password</h2>
 
-        <?php if (!empty($passwordErrors)): ?>
-            <div class="alert alert-danger">
-                <strong>Password could not be changed:</strong>
-                <ul>
-                    <?php foreach ($passwordErrors as $error): ?>
-                        <li><?= htmlspecialchars($error) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+        <p>For security, password changes are completed through an email reset link.</p>
 
         <form method="POST" action="index.php?page=my-profile-password">
-            <div class="form-group">
-                <label for="current_password">Current password</label>
-                <input type="password" id="current_password" name="current_password" required>
-            </div>
-
-            <div class="form-group">
-                <label for="new_password">New password</label>
-                <input type="password" id="new_password" name="new_password" minlength="8" required>
-            </div>
-
-            <div class="form-group">
-                <label for="new_password_confirm">Confirm new password</label>
-                <input type="password" id="new_password_confirm" name="new_password_confirm" minlength="8" required>
-            </div>
-
             <div class="hero-actions">
-                <button class="btn" type="submit">Change Password</button>
+                <button class="btn" type="submit">Email Password Reset Link</button>
             </div>
         </form>
     </div>

@@ -1,19 +1,24 @@
 <?php
-$heading = $heading ?? 'Login';
+$heading = $heading ?? 'Reset your password';
 $errors = $errors ?? [];
 $old = $old ?? [];
+$sent = $sent ?? false;
 ?>
 
 <section class="card auth-card">
     <h1><?= htmlspecialchars($heading) ?></h1>
 
-    <p>
-        Login to manage your events, payments, rating, and tournament activity.
-    </p>
+    <p>Enter your account email and we will send you a password reset link.</p>
+
+    <?php if ($sent): ?>
+        <div class="alert alert-success">
+            If that email exists, a reset link has been sent.
+        </div>
+    <?php endif; ?>
 
     <?php if (!empty($errors)): ?>
         <div class="alert alert-danger">
-            <strong>Login failed:</strong>
+            <strong>Password reset could not be requested:</strong>
             <ul>
                 <?php foreach ($errors as $error): ?>
                     <li><?= htmlspecialchars($error) ?></li>
@@ -22,7 +27,7 @@ $old = $old ?? [];
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="index.php?page=login-submit">
+    <form method="POST" action="index.php?page=forgot-password-submit">
         <div class="form-group">
             <label for="email">Email address</label>
             <input
@@ -34,20 +39,6 @@ $old = $old ?? [];
             >
         </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input
-                type="password"
-                id="password"
-                name="password"
-                required
-            >
-        </div>
-
-        <button class="btn" type="submit">Login</button>
+        <button class="btn" type="submit">Send Reset Link</button>
     </form>
-
-    <p>
-        <a href="index.php?page=forgot-password">Forgot your password?</a>
-    </p>
 </section>

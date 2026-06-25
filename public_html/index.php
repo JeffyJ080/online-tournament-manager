@@ -104,6 +104,22 @@ $router->get('login', function () use ($authController) {
     $authController->showLogin();
 });
 
+$router->get('forgot-password', function () use ($authController) {
+    $authController->showForgotPassword();
+});
+
+$router->get('forgot-password-submit', function () use ($authController) {
+    $authController->sendPasswordReset();
+});
+
+$router->get('reset-password', function () use ($authController) {
+    $authController->showResetPassword();
+});
+
+$router->get('reset-password-submit', function () use ($authController) {
+    $authController->resetPassword();
+});
+
 $router->get('register-submit', function () use ($authController) {
     $authController->register();
 });

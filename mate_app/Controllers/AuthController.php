@@ -2,9 +2,11 @@
 
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Core/Database.php';
+require_once __DIR__ . '/../Core/Mailer.php';
 require_once __DIR__ . '/../Models/User.php';
 require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
+require_once __DIR__ . '/../Models/PasswordReset.php';
 
 class AuthController extends Controller
 {
@@ -35,6 +37,154 @@ class AuthController extends Controller
             'heading' => 'Login to Mate Tournaments',
             'errors' => [],
             'old' => [],
+        ]);
+    }
+
+    public function showForgotPassword(): void
+    {
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php?page=dashboard');
+            exit;
+        }
+
+        $this->view('auth/forgot_password', [
+            'title' => 'Forgot Password',
+            'heading' => 'Reset your password',
+            'errors' => [],
+            'old' => [],
+            'sent' => false,
+        ]);
+    }
+
+    public function sendPasswordReset(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=forgot-password');
+            exit;
+        }
+
+        $email = trim($_POST['email'] ?? '');
+        $errors = [];
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Please enter a valid email address.';
+        }
+
+        if (!empty($errors)) {
+            $this->view('auth/forgot_password', [
+                'title' => 'Forgot Password',
+                'heading' => 'Reset your password',
+                'errors' => $errors,
+                'old' => ['email' => $email],
+                'sent' => false,
+            ]);
+            return;
+        }
+
+        $userModel = new User();
+        $user = $userModel->findByEmail($email);
+
+        if ($user && ($user['status'] ?? '') === 'active') {
+            $this->sendResetEmail((int) $user['id'], $user['email']);
+        }
+
+        $this->view('auth/forgot_password', [
+            'title' => 'Forgot Password',
+            'heading' => 'Reset your password',
+            'errors' => [],
+            'old' => ['email' => $email],
+            'sent' => true,
+        ]);
+    }
+
+    public function showResetPassword(): void
+    {
+        if (isset($_SESSION['user'])) {
+            header('Location: index.php?page=dashboard');
+            exit;
+        }
+
+        $token = trim($_GET['token'] ?? '');
+        $resetModel = new PasswordReset();
+        $reset = $token !== '' ? $resetModel->findValidByToken($token) : null;
+
+        if (!$reset) {
+            $this->view('auth/reset_password', [
+                'title' => 'Reset Password',
+                'heading' => 'Reset your password',
+                'token' => '',
+                'errors' => ['This password reset link is invalid or has expired.'],
+                'success' => false,
+            ]);
+            return;
+        }
+
+        $this->view('auth/reset_password', [
+            'title' => 'Reset Password',
+            'heading' => 'Reset your password',
+            'token' => $token,
+            'errors' => [],
+            'success' => false,
+        ]);
+    }
+
+    public function resetPassword(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=login');
+            exit;
+        }
+
+        $token = trim($_POST['token'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $passwordConfirm = $_POST['password_confirm'] ?? '';
+        $errors = [];
+
+        $resetModel = new PasswordReset();
+        $reset = $token !== '' ? $resetModel->findValidByToken($token) : null;
+
+        if (!$reset) {
+            $errors[] = 'This password reset link is invalid or has expired.';
+        }
+
+        if (strlen($password) < 8) {
+            $errors[] = 'Password must be at least 8 characters.';
+        }
+
+        if ($password !== $passwordConfirm) {
+            $errors[] = 'Passwords do not match.';
+        }
+
+        if (!empty($errors)) {
+            $this->view('auth/reset_password', [
+                'title' => 'Reset Password',
+                'heading' => 'Reset your password',
+                'token' => $token,
+                'errors' => $errors,
+                'success' => false,
+            ]);
+            return;
+        }
+
+        $userModel = new User();
+        $userModel->updatePassword((int) $reset['user_id'], $password);
+        $resetModel->markUsed((int) $reset['id']);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            (int) $reset['user_id'],
+            'password_reset_completed',
+            'user',
+            (int) $reset['user_id'],
+            'User reset their password using an email link.'
+        );
+
+        $this->view('auth/reset_password', [
+            'title' => 'Reset Password',
+            'heading' => 'Reset your password',
+            'token' => '',
+            'errors' => [],
+            'success' => true,
         ]);
     }
 
@@ -258,5 +408,36 @@ class AuthController extends Controller
 
         header('Location: index.php?page=login');
         exit;
+    }
+
+    public function sendResetEmail(int $userId, string $email): bool
+    {
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = new DateTime('+1 hour');
+
+        $resetModel = new PasswordReset();
+        $resetModel->create($userId, $token, $expiresAt);
+
+        $appConfig = require __DIR__ . '/../../mate_config/app.php';
+        $resetUrl = rtrim($appConfig['app_url'], '/') . '/index.php?page=reset-password&token=' . urlencode($token);
+
+        $body = '
+            <p>A password reset was requested for your Mate Tournaments account.</p>
+            <p><a href="' . htmlspecialchars($resetUrl) . '">Reset your password</a></p>
+            <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+        ';
+
+        $sent = Mailer::send($email, 'Reset your Mate Tournaments password', $body);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            $userId,
+            'password_reset_requested',
+            'user',
+            $userId,
+            'Password reset email requested.'
+        );
+
+        return $sent;
     }
 }
