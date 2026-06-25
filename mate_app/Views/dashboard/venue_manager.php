@@ -1,6 +1,9 @@
 <?php
 $heading = $heading ?? 'Venue Manager Dashboard';
 $user = $user ?? [];
+$upcomingEvents = $upcomingEvents ?? 0;
+$totalEventsHosted = $totalEventsHosted ?? 0;
+$averageAttendance = $averageAttendance ?? 0;
 ?>
 
 <section class="dashboard-header">
@@ -9,24 +12,24 @@ $user = $user ?? [];
         <h1><?= htmlspecialchars($heading) ?></h1>
         <p>
             Welcome, <?= htmlspecialchars($user['email'] ?? 'venue manager') ?>.
-            Your venue’s upcoming events, attendance stats, and past events will appear here.
+            Review venue activity, public event listings, and event performance.
         </p>
     </div>
 </section>
 
 <section class="dashboard-grid">
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $upcomingEvents ?></strong>
         <span>Upcoming Events</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $totalEventsHosted ?></strong>
         <span>Total Events Hosted</span>
     </div>
 
     <div class="card stat-card">
-        <strong>0</strong>
+        <strong><?= (int) $averageAttendance ?></strong>
         <span>Average Attendance</span>
     </div>
 </section>
@@ -35,24 +38,24 @@ $user = $user ?? [];
     <h2>Venue overview</h2>
 
     <div class="shortcut-grid">
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=events">
             <strong>Upcoming Events</strong>
-            <span>Coming soon: view events scheduled at your venue.</span>
+            <span>View active public events and player registration options.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=leaderboard">
             <strong>Attendance Stats</strong>
-            <span>Coming soon: track event turnout over time.</span>
+            <span>Use tournament standings and leaderboards to review activity.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=events">
             <strong>Past Events</strong>
-            <span>Coming soon: see previous Mate events hosted here.</span>
+            <span>Review event status and live tournament pages from event links.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=venues">
             <strong>Venue Profile</strong>
-            <span>Coming soon: review venue contact and event details.</span>
+            <span>Review public venue contact details and food specials.</span>
         </a>
     </div>
 </section>

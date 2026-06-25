@@ -1,5 +1,37 @@
 <?php
+$config = require __DIR__ . '/../mate_config/app.php';
+
+if (!empty($config['production'])) {
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', '1');
+    error_reporting(E_ALL);
+}
+
+$sessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mate_tournaments_sessions';
+
+if (!is_dir($sessionPath)) {
+    mkdir($sessionPath, 0777, true);
+}
+
+if (is_writable($sessionPath)) {
+    session_save_path($sessionPath);
+}
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
 session_start();
+
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 require_once __DIR__ . '/../mate_app/Core/Database.php';
 require_once __DIR__ . '/../mate_app/Core/Router.php';
@@ -14,11 +46,22 @@ require_once __DIR__ . '/../mate_app/Controllers/PlayerRegistrationController.ph
 require_once __DIR__ . '/../mate_app/Controllers/AdminEventController.php';
 require_once __DIR__ . '/../mate_app/Controllers/HostEventController.php';
 require_once __DIR__ . '/../mate_app/Controllers/TournamentManagerController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminUserController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminLeaderboardController.php';
+require_once __DIR__ . '/../mate_app/Controllers/ProfileController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
+require_once __DIR__ . '/../mate_app/Helpers/Csrf.php';
 require_once __DIR__ . '/../mate_app/Middleware/RequireAuth.php';
 
-$config = require __DIR__ . '/../mate_config/app.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_verify($_POST['csrf_token'] ?? null)) {
+    http_response_code(419);
+    echo '<h1>419 - Security check failed</h1>';
+    echo '<p>Please go back, refresh the page, and try again.</p>';
+    exit;
+}
+
+ob_start('csrf_inject_forms');
 
 $router = new Router();
 
@@ -33,6 +76,9 @@ $playerRegistrationController = new PlayerRegistrationController();
 $adminEventController = new AdminEventController();
 $hostEventController = new HostEventController();
 $tournamentManagerController = new TournamentManagerController();
+$adminUserController = new AdminUserController();
+$adminLeaderboardController = new AdminLeaderboardController();
+$profileController = new ProfileController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -68,6 +114,18 @@ $router->get('login-submit', function () use ($authController) {
 
 $router->get('dashboard', function () use ($dashboardController) {
     $dashboardController->index();
+});
+
+$router->get('my-profile', function () use ($profileController) {
+    $profileController->show();
+});
+
+$router->get('my-profile-update', function () use ($profileController) {
+    $profileController->update();
+});
+
+$router->get('my-profile-password', function () use ($profileController) {
+    $profileController->changePassword();
 });
 
 $router->get('logout', function () use ($authController) {
@@ -146,6 +204,26 @@ $router->get('admin-events', function () use ($adminEventController) {
     $adminEventController->index();
 });
 
+$router->get('admin-users', function () use ($adminUserController) {
+    $adminUserController->index();
+});
+
+$router->get('admin-users-store', function () use ($adminUserController) {
+    $adminUserController->store();
+});
+
+$router->get('admin-users-update', function () use ($adminUserController) {
+    $adminUserController->update();
+});
+
+$router->get('admin-leaderboards', function () use ($adminLeaderboardController) {
+    $adminLeaderboardController->index();
+});
+
+$router->get('admin-leaderboards-store', function () use ($adminLeaderboardController) {
+    $adminLeaderboardController->store();
+});
+
 $router->get('admin-events-create', function () use ($adminEventController) {
     $adminEventController->create();
 });
@@ -164,6 +242,22 @@ $router->get('admin-events-update', function () use ($adminEventController) {
 
 $router->get('venues', function () use ($publicController) {
     $publicController->venues();
+});
+
+$router->get('leaderboard', function () use ($publicController) {
+    $publicController->leaderboard();
+});
+
+$router->get('live-tournament', function () use ($publicController) {
+    $publicController->liveTournament();
+});
+
+$router->get('live-display', function () use ($publicController) {
+    $publicController->liveDisplay();
+});
+
+$router->get('live-display-data', function () use ($publicController) {
+    $publicController->liveDisplayData();
 });
 
 $router->get('host-events', function () use ($hostEventController) {
@@ -200,6 +294,26 @@ $router->get('tournament-create', function () use ($tournamentManagerController)
 
 $router->get('tournament-import-participants', function () use ($tournamentManagerController) {
     $tournamentManagerController->importParticipants();
+});
+
+$router->get('tournament-generate-round-one', function () use ($tournamentManagerController) {
+    $tournamentManagerController->generateRoundOne();
+});
+
+$router->get('tournament-submit-result', function () use ($tournamentManagerController) {
+    $tournamentManagerController->submitResult();
+});
+
+$router->get('tournament-submit-round-results', function () use ($tournamentManagerController) {
+    $tournamentManagerController->submitRoundResults();
+});
+
+$router->get('tournament-generate-next-round', function () use ($tournamentManagerController) {
+    $tournamentManagerController->generateNextRound();
+});
+
+$router->get('tournament-complete', function () use ($tournamentManagerController) {
+    $tournamentManagerController->completeTournament();
 });
 
 $router->dispatch();

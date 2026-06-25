@@ -1,6 +1,7 @@
 INSERT INTO roles (name, description) VALUES
 ('super_admin', 'Owner-level full access'),
 ('admin', 'Manage events, users, venues, payments, tournaments and reports'),
+('event_manager', 'Manage assigned event operations and tournament execution'),
 ('host', 'Run assigned events and enter results'),
 ('venue_manager', 'View venue events and stats'),
 ('player', 'Register for events and view own profile');
@@ -50,7 +51,7 @@ SELECT
     'Sinkhuis Weekly Chess Night',
     'sinkhuis-weekly-chess-night',
     'Weekly chess night with leaderboard points and a year-end prize pot.',
-    '2026-06-10',
+    '2026-06-24',
     '18:00:00',
     100.00,
     'Nightly prizes plus year-end prize pot',
@@ -155,3 +156,40 @@ SELECT
     'active'
 FROM venues
 WHERE slug = 'tonis-pizza';
+
+INSERT INTO leaderboard_seasons (
+    venue_id,
+    series_id,
+    name,
+    slug,
+    starts_on,
+    ends_on,
+    status,
+    notes
+)
+SELECT
+    venues.id,
+    event_series.id,
+    'Sinkhuis 2026 Season',
+    'sinkhuis-2026-season',
+    '2026-01-01',
+    '2026-12-31',
+    'active',
+    'Calendar-year placement points season.'
+FROM venues
+INNER JOIN event_series ON event_series.venue_id = venues.id
+WHERE venues.slug = 'sinkhuis'
+  AND event_series.slug = 'sinkhuis-weekly-chess-night';
+
+INSERT INTO leaderboard_point_rules (season_id, placement_from, placement_to, points)
+SELECT id, 1, 1, 10 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season'
+UNION ALL
+SELECT id, 2, 2, 7 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season'
+UNION ALL
+SELECT id, 3, 3, 5 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season'
+UNION ALL
+SELECT id, 4, 4, 3 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season'
+UNION ALL
+SELECT id, 5, 6, 2 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season'
+UNION ALL
+SELECT id, 7, 999, 1 FROM leaderboard_seasons WHERE slug = 'sinkhuis-2026-season';

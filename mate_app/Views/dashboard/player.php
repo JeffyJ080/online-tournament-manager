@@ -12,7 +12,7 @@ $matchesPlayed = $matchesPlayed ?? 0;
         <h1><?= htmlspecialchars($heading) ?></h1>
         <p>
             Welcome back, <?= htmlspecialchars($user['email'] ?? 'player') ?>.
-            This is where your events, rating, payments, and match history will live.
+            Track your registrations, payments, rating, and leaderboard position.
         </p>
     </div>
 </section>
@@ -43,19 +43,24 @@ $matchesPlayed = $matchesPlayed ?? 0;
             <span>View bookings, payment status, and upload proof of payment.</span>
         </a>
 
+        <a class="shortcut-card" href="index.php?page=my-profile">
+            <strong>My Profile</strong>
+            <span>Update your player details and change your password.</span>
+        </a>
+
         <a class="shortcut-card" href="index.php?page=events">
             <strong>Find Events</strong>
             <span>Browse upcoming Mate Tournaments events.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=leaderboard">
             <strong>My Rating</strong>
-            <span>Coming soon: view your Mate Elo and rating history.</span>
+            <span>Compare your tournament score against the public leaderboard.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=leaderboard">
             <strong>Match History</strong>
-            <span>Coming soon: view your played matches and results.</span>
+            <span>Review standings and results through event live views.</span>
         </a>
     </div>
 </section>

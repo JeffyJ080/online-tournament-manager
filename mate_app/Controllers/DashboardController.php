@@ -8,6 +8,7 @@ require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/PaymentProof.php';
 require_once __DIR__ . '/../Models/Venue.php';
+require_once __DIR__ . '/../Models/EventHost.php';
 
 class DashboardController extends Controller
 {
@@ -55,25 +56,35 @@ class DashboardController extends Controller
             'user' => Auth::user(),
             'player' => $player,
             'upcomingRegistrations' => $upcomingRegistrations,
-            'matchesPlayed' => 0,
+            'matchesPlayed' => $registrationModel->countMatchesForUser(Auth::id()),
         ]);
     }
 
     public function host(): void
     {
+        $hostModel = new EventHost();
+
         $this->view('dashboard/host', [
             'title' => 'Host Dashboard',
             'heading' => 'Host Dashboard',
             'user' => Auth::user(),
+            'assignedEvents' => $hostModel->countAssignedEvents(Auth::id()),
+            'checkedInPlayers' => $hostModel->countCheckedInPlayers(Auth::id()),
+            'cashToHandOver' => $hostModel->cashToHandOver(Auth::id()),
         ]);
     }
 
     public function venueManager(): void
     {
+        $venueModel = new Venue();
+
         $this->view('dashboard/venue_manager', [
             'title' => 'Venue Dashboard',
             'heading' => 'Venue Manager Dashboard',
             'user' => Auth::user(),
+            'upcomingEvents' => $venueModel->countUpcomingForManager(Auth::id()),
+            'totalEventsHosted' => $venueModel->countHostedForManager(Auth::id()),
+            'averageAttendance' => $venueModel->averageAttendanceForManager(Auth::id()),
         ]);
     }
 

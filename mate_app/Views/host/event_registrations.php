@@ -4,6 +4,7 @@ $event = $event ?? [];
 $registrations = $registrations ?? [];
 $errors = $errors ?? [];
 $walkInOld = $walkInOld ?? [];
+$eventClosed = in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
 
 function walkOld(array $old, string $key): string
 {
@@ -26,11 +27,19 @@ function hostRegLabel(?string $value): string
         <div class="hero-kicker">Host Operations</div>
         <h1><?= htmlspecialchars($event['title'] ?? $heading) ?></h1>
         <p>
-            Check players in and monitor registrations for this event.
+            <?= $eventClosed ? 'Review registrations for a completed or closed event.' : 'Check players in and monitor registrations for this event.' ?>
         </p>
     </div>
 </section>
 
+<?php if ($eventClosed): ?>
+    <section class="card">
+        <h2>Review Mode</h2>
+        <p>This event is completed or closed, so walk-ins and check-ins are locked.</p>
+    </section>
+
+    <br/>
+<?php else: ?>
 <section class="card">
     <div class="section-header">
         <div>
@@ -137,6 +146,7 @@ function hostRegLabel(?string $value): string
 </section>
 
 <br/>
+<?php endif; ?>
 
 <section class="card">
     <div class="section-header">
@@ -148,7 +158,11 @@ function hostRegLabel(?string $value): string
         </div>
 
         <a class="btn" href="index.php?page=tournament-manager&id=<?= (int) ($event['id'] ?? 0) ?>">
-            Tournament Manager
+            <?= $eventClosed ? 'View Tournament' : 'Tournament Manager' ?>
+        </a>
+
+        <a class="btn btn-outline" href="index.php?page=live-display&event=<?= (int) ($event['id'] ?? 0) ?>" target="_blank">
+            Second Screen
         </a>
 
         <a class="btn" href="index.php?page=host-event-report&id=<?= (int) ($event['id'] ?? 0) ?>">
@@ -216,7 +230,7 @@ function hostRegLabel(?string $value): string
                             </td>
 
                             <td>
-                                <?php if (($registration['registration_status'] ?? '') !== 'checked_in'): ?>
+                                <?php if (!$eventClosed && ($registration['registration_status'] ?? '') !== 'checked_in'): ?>
                                     <form method="POST" action="index.php?page=host-check-in">
                                         <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
                                         <input type="hidden" name="event_id" value="<?= (int) $event['id'] ?>">

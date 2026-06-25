@@ -112,6 +112,14 @@ function adminEventLabel(?string $value): string
                                         Public
                                     </a>
 
+                                    <a class="btn btn-outline btn-sm" href="index.php?page=live-tournament&event=<?= (int) $event['id'] ?>">
+                                        Live
+                                    </a>
+
+                                    <a class="btn btn-outline btn-sm" href="index.php?page=tournament-manager&id=<?= (int) $event['id'] ?>">
+                                        Tournament
+                                    </a>
+
                                     <a class="btn btn-outline btn-sm" href="index.php?page=admin-events-edit&id=<?= (int) $event['id'] ?>">
                                         Edit
                                     </a>

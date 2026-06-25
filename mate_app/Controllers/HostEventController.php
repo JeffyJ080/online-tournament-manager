@@ -16,13 +16,17 @@ class HostEventController extends Controller
     {
         RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
 
-        $hostModel = new EventHost();
-
-        $events = $hostModel->assignedEvents(Auth::id());
+        if (Auth::hasAnyRole(['admin', 'super_admin'])) {
+            $eventModel = new Event();
+            $events = $eventModel->all();
+        } else {
+            $hostModel = new EventHost();
+            $events = $hostModel->assignedEvents(Auth::id());
+        }
 
         $this->view('host/assigned_events', [
             'title' => 'Assigned Events',
-            'heading' => 'Assigned Events',
+            'heading' => Auth::hasAnyRole(['admin', 'super_admin']) ? 'All Events' : 'Assigned Events',
             'events' => $events,
         ]);
     }
@@ -91,6 +95,20 @@ class HostEventController extends Controller
             return;
         }
 
+        $eventModel = new Event();
+        $event = $eventModel->findById($eventId);
+
+        if (!$event) {
+            http_response_code(404);
+            echo '<h1>404 - Event not found</h1>';
+            return;
+        }
+
+        if ($this->eventIsClosedForOperations($event)) {
+            header('Location: index.php?page=host-event-registrations&id=' . $eventId);
+            exit;
+        }
+
         $registrationModel = new EventRegistration();
 
         $registrationModel->checkIn($registrationId);
@@ -149,6 +167,11 @@ class HostEventController extends Controller
             http_response_code(404);
             echo '<h1>404 - Event not found</h1>';
             return;
+        }
+
+        if ($this->eventIsClosedForOperations($event)) {
+            header('Location: index.php?page=host-event-registrations&id=' . $eventId);
+            exit;
         }
 
         $validRatingCategories = ['beginner', 'casual', 'standard'];
@@ -400,5 +423,10 @@ class HostEventController extends Controller
 
         header('Location: index.php?page=host-event-registrations&id=' . $eventId);
         exit;
+    }
+
+    private function eventIsClosedForOperations(array $event): bool
+    {
+        return in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
     }
 }

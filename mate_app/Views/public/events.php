@@ -117,6 +117,9 @@ function formatEventLabel(string $value): string
                     <a class="btn btn-outline" href="index.php?page=register-event&event=<?= (int) $event['id'] ?>">
                         Register
                     </a>
+                    <a class="btn btn-outline" href="index.php?page=live-tournament&event=<?= (int) $event['id'] ?>">
+                        Live
+                    </a>
                 </div>
             </article>
         <?php endforeach; ?>

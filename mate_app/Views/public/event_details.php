@@ -42,6 +42,10 @@ function eventDetailLabel(string $value): string
                 Register for Event
             </a>
 
+            <a class="btn btn-outline" href="index.php?page=live-tournament&event=<?= (int) $event['id'] ?>">
+                Live View
+            </a>
+
             <a class="btn btn-outline" href="index.php?page=events">
                 Back to Events
             </a>

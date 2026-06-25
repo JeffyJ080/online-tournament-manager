@@ -2,6 +2,8 @@
 $heading = $heading ?? 'Edit Event';
 $venues = $venues ?? [];
 $seriesList = $seriesList ?? [];
+$eventStaff = $eventStaff ?? [];
+$assignedStaffIds = $assignedStaffIds ?? [];
 $errors = $errors ?? [];
 $old = $old ?? [];
 
@@ -144,6 +146,17 @@ function eventOptionLabel(string $value): string
         <div class="form-group">
             <label for="notes">Internal notes</label>
             <textarea id="notes" name="notes" rows="4"><?= oldEventValue($old, 'notes') ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="assigned_staff_ids">Assigned hosts / event managers</label>
+            <select id="assigned_staff_ids" name="assigned_staff_ids[]" multiple size="5">
+                <?php foreach ($eventStaff as $staff): ?>
+                    <option value="<?= (int) $staff['id'] ?>" <?= in_array((int) $staff['id'], $assignedStaffIds, true) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($staff['email']) ?> (<?= htmlspecialchars(eventOptionLabel($staff['role_name'])) ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <div class="hero-actions">

@@ -90,4 +90,22 @@ class Round extends Model
 
         return $stmt->execute([$roundId]);
     }
+
+    public function latestForTournament(int $tournamentId): ?array
+    {
+        $sql = "
+            SELECT *
+            FROM rounds
+            WHERE tournament_id = ?
+            ORDER BY round_number DESC
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$tournamentId]);
+
+        $round = $stmt->fetch();
+
+        return $round ?: null;
+    }
 }

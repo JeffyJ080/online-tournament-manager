@@ -226,4 +226,18 @@ class Event extends Model
 
         return (int) ($result['total'] ?? 0);
     }
+
+    public function completeAfterTournament(int $id): bool
+    {
+        $sql = "
+            UPDATE events
+            SET event_status = 'completed',
+                registration_status = 'closed'
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$id]);
+    }
 }

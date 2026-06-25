@@ -22,7 +22,7 @@ $heading = $heading ?? 'Mate Tournaments';
     <div class="card">
         <h2>Next move</h2>
         <p>
-            Upcoming event cards will appear here once the database event system is connected.
+            Browse published events, register for a seat, follow live pairings, and track leaderboard results.
         </p>
     </div>
 </section>
@@ -30,16 +30,16 @@ $heading = $heading ?? 'Mate Tournaments';
 <section class="stat-grid">
     <div class="card stat-card">
         <strong>3</strong>
-        <span>Core formats planned</span>
+        <span>Core formats supported</span>
     </div>
 
     <div class="card stat-card">
         <strong>5+</strong>
-        <span>Leaderboard types</span>
+        <span>Operational roles</span>
     </div>
 
     <div class="card stat-card">
-        <strong>∞</strong>
-        <span>Potential chess chaos</span>
+        <strong>Live</strong>
+        <span>Pairings and standings</span>
     </div>
 </section>

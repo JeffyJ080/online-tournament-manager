@@ -13,7 +13,7 @@ $activeVenues = $activeVenues ?? 0;
         <h1><?= htmlspecialchars($heading) ?></h1>
         <p>
             Welcome, <?= htmlspecialchars($user['email'] ?? 'admin') ?>.
-            Upcoming events, payments, registrations, leaderboards, and tournament tools will live here.
+            Manage events, payments, registrations, venues, leaderboards, and tournament tools.
         </p>
     </div>
 </section>
@@ -59,6 +59,11 @@ $activeVenues = $activeVenues ?? 0;
             <span>Manage restaurants, campuses, and host locations.</span>
         </a>
 
+        <a class="shortcut-card" href="index.php?page=admin-users">
+            <strong>Users</strong>
+            <span>Create hosts, event managers, venue managers, admins, and players.</span>
+        </a>
+
         <a class="shortcut-card" href="index.php?page=events">
             <strong>Public Events</strong>
             <span>View the public event listing as players see it.</span>
@@ -69,19 +74,24 @@ $activeVenues = $activeVenues ?? 0;
             <span>Create, edit, and manage tournament events.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=admin-events">
             <strong>Tournament Manager</strong>
-            <span>Coming soon: run pairings, rounds, and results.</span>
+            <span>Open an event, then launch Tournament Manager for pairings and results.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=leaderboard">
             <strong>Leaderboards</strong>
-            <span>Coming soon: Elo, venue, weekly, and seasonal rankings.</span>
+            <span>View public season standings across tournament results.</span>
         </a>
 
-        <a class="shortcut-card is-disabled" href="#">
+        <a class="shortcut-card" href="index.php?page=admin-leaderboards">
+            <strong>Leaderboard Admin</strong>
+            <span>Create restaurant seasons and custom placement point rules.</span>
+        </a>
+
+        <a class="shortcut-card" href="index.php?page=host-events">
             <strong>Reports</strong>
-            <span>Coming soon: event summaries and venue stats.</span>
+            <span>Review assigned event operations and submit event reports.</span>
         </a>
     </div>
 </section>

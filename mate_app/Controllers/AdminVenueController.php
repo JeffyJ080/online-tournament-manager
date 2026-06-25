@@ -5,6 +5,7 @@ require_once __DIR__ . '/../Middleware/RequireAuth.php';
 require_once __DIR__ . '/../Models/Venue.php';
 require_once __DIR__ . '/../Helpers/slug.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
+require_once __DIR__ . '/../Models/User.php';
 
 class AdminVenueController extends Controller
 {
@@ -25,12 +26,14 @@ class AdminVenueController extends Controller
     public function create(): void
     {
         RequireAuth::anyRole(['admin', 'super_admin']);
+        $userModel = new User();
 
         $this->view('admin/venues/create', [
             'title' => 'Add Venue',
             'heading' => 'Add Venue',
             'errors' => [],
             'old' => [],
+            'venueManagers' => $userModel->usersByRole(['venue_manager']),
         ]);
     }
 
@@ -49,6 +52,7 @@ class AdminVenueController extends Controller
         $contactPerson = trim($_POST['contact_person'] ?? '');
         $contactEmail = trim($_POST['contact_email'] ?? '');
         $contactPhone = trim($_POST['contact_phone'] ?? '');
+        $venueManagerUserId = ($_POST['venue_manager_user_id'] ?? '') !== '' ? (int) $_POST['venue_manager_user_id'] : null;
         $foodDealDescription = trim($_POST['food_deal_description'] ?? '');
         $notes = trim($_POST['notes'] ?? '');
         $status = trim($_POST['status'] ?? 'active');
@@ -85,17 +89,20 @@ class AdminVenueController extends Controller
             'contact_person' => $contactPerson,
             'contact_email' => $contactEmail,
             'contact_phone' => $contactPhone,
+            'venue_manager_user_id' => $venueManagerUserId,
             'food_deal_description' => $foodDealDescription,
             'notes' => $notes,
             'status' => $status,
         ];
 
         if (!empty($errors)) {
+            $userModel = new User();
             $this->view('admin/venues/create', [
                 'title' => 'Add Venue',
                 'heading' => 'Add Venue',
                 'errors' => $errors,
                 'old' => $old,
+                'venueManagers' => $userModel->usersByRole(['venue_manager']),
             ]);
             return;
         }
@@ -108,6 +115,7 @@ class AdminVenueController extends Controller
             'contact_person' => $contactPerson !== '' ? $contactPerson : null,
             'contact_email' => $contactEmail !== '' ? $contactEmail : null,
             'contact_phone' => $contactPhone !== '' ? $contactPhone : null,
+            'venue_manager_user_id' => $venueManagerUserId,
             'food_deal_description' => $foodDealDescription !== '' ? $foodDealDescription : null,
             'notes' => $notes !== '' ? $notes : null,
             'status' => $status,
@@ -139,6 +147,7 @@ class AdminVenueController extends Controller
 
         $venueModel = new Venue();
         $venue = $venueModel->findById($id);
+        $userModel = new User();
 
         if (!$venue) {
             http_response_code(404);
@@ -152,6 +161,7 @@ class AdminVenueController extends Controller
             'venue' => $venue,
             'errors' => [],
             'old' => $venue,
+            'venueManagers' => $userModel->usersByRole(['venue_manager']),
         ]);
     }
 
@@ -177,6 +187,7 @@ class AdminVenueController extends Controller
         $contactPerson = trim($_POST['contact_person'] ?? '');
         $contactEmail = trim($_POST['contact_email'] ?? '');
         $contactPhone = trim($_POST['contact_phone'] ?? '');
+        $venueManagerUserId = ($_POST['venue_manager_user_id'] ?? '') !== '' ? (int) $_POST['venue_manager_user_id'] : null;
         $foodDealDescription = trim($_POST['food_deal_description'] ?? '');
         $notes = trim($_POST['notes'] ?? '');
         $status = trim($_POST['status'] ?? 'active');
@@ -213,18 +224,21 @@ class AdminVenueController extends Controller
             'contact_person' => $contactPerson,
             'contact_email' => $contactEmail,
             'contact_phone' => $contactPhone,
+            'venue_manager_user_id' => $venueManagerUserId,
             'food_deal_description' => $foodDealDescription,
             'notes' => $notes,
             'status' => $status,
         ];
 
         if (!empty($errors)) {
+            $userModel = new User();
             $this->view('admin/venues/edit', [
                 'title' => 'Edit Venue',
                 'heading' => 'Edit Venue',
                 'venue' => $venue,
                 'errors' => $errors,
                 'old' => $old,
+                'venueManagers' => $userModel->usersByRole(['venue_manager']),
             ]);
             return;
         }
@@ -236,6 +250,7 @@ class AdminVenueController extends Controller
             'contact_person' => $contactPerson !== '' ? $contactPerson : null,
             'contact_email' => $contactEmail !== '' ? $contactEmail : null,
             'contact_phone' => $contactPhone !== '' ? $contactPhone : null,
+            'venue_manager_user_id' => $venueManagerUserId,
             'food_deal_description' => $foodDealDescription !== '' ? $foodDealDescription : null,
             'notes' => $notes !== '' ? $notes : null,
             'status' => $status,

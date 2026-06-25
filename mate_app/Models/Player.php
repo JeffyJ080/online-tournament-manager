@@ -64,4 +64,31 @@ class Player extends Model
 
         return $player ?: null;
     }
+
+    public function updateForUser(
+        int $userId,
+        string $realName,
+        ?string $displayName,
+        ?string $phone,
+        string $ratingCategory
+    ): bool {
+        $sql = "
+            UPDATE players
+            SET real_name = ?,
+                display_name = ?,
+                phone = ?,
+                rating_category = ?
+            WHERE user_id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            $realName,
+            $displayName,
+            $phone,
+            $ratingCategory,
+            $userId,
+        ]);
+    }
 }

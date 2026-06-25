@@ -309,4 +309,25 @@ class EventRegistration extends Model
 
         return $stmt->execute([$registrationId]);
     }
+
+    public function countMatchesForUser(int $userId): int
+    {
+        $sql = "
+            SELECT COUNT(matches.id) AS total
+            FROM event_registrations
+            INNER JOIN matches
+                ON matches.white_registration_id = event_registrations.id
+                OR matches.black_registration_id = event_registrations.id
+            WHERE event_registrations.user_id = ?
+              AND matches.status = 'completed'
+              AND matches.result <> 'bye'
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$userId]);
+
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
 }

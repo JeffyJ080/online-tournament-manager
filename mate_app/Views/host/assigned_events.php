@@ -36,6 +36,9 @@ function hostEventLabel(?string $value): string
 <?php else: ?>
     <section class="event-grid">
         <?php foreach ($events as $event): ?>
+            <?php
+            $eventClosed = in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
+            ?>
             <article class="card event-card">
                 <div>
                     <div class="hero-kicker">
@@ -64,11 +67,22 @@ function hostEventLabel(?string $value): string
                         <span>Registrations</span>
                         <strong><?= (int) ($event['active_registrations'] ?? 0) ?> / <?= (int) ($event['max_players'] ?? 0) ?></strong>
                     </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong><?= htmlspecialchars(hostEventLabel($event['event_status'] ?? '-')) ?></strong>
+                    </div>
                 </div>
 
                 <div class="hero-actions">
                     <a class="btn btn-outline" href="index.php?page=host-event-registrations&id=<?= (int) $event['id'] ?>">
-                        Manage Event
+                        <?= $eventClosed ? 'Review Event' : 'Manage Event' ?>
+                    </a>
+                    <a class="btn btn-outline" href="index.php?page=live-tournament&event=<?= (int) $event['id'] ?>">
+                        Live View
+                    </a>
+                    <a class="btn btn-outline" href="index.php?page=live-display&event=<?= (int) $event['id'] ?>" target="_blank">
+                        Second Screen
                     </a>
                 </div>
             </article>

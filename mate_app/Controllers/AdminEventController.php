@@ -5,6 +5,8 @@ require_once __DIR__ . '/../Middleware/RequireAuth.php';
 require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/Venue.php';
 require_once __DIR__ . '/../Models/EventSeries.php';
+require_once __DIR__ . '/../Models/EventHost.php';
+require_once __DIR__ . '/../Models/User.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
 require_once __DIR__ . '/../Helpers/slug.php';
@@ -205,6 +207,8 @@ class AdminEventController extends Controller
 
         $venueModel = new Venue();
         $seriesModel = new EventSeries();
+        $userModel = new User();
+        $hostModel = new EventHost();
 
         $this->view('admin/events/edit', [
             'title' => 'Edit Event',
@@ -212,6 +216,8 @@ class AdminEventController extends Controller
             'event' => $event,
             'venues' => $venueModel->active(),
             'seriesList' => $seriesModel->active(),
+            'eventStaff' => $userModel->usersByRole(['host', 'event_manager']),
+            'assignedStaffIds' => $hostModel->assignedUserIds($id),
             'errors' => [],
             'old' => $event,
         ]);
@@ -251,6 +257,7 @@ class AdminEventController extends Controller
         $registrationStatus = trim($_POST['registration_status'] ?? 'open');
         $eventStatus = trim($_POST['event_status'] ?? 'draft');
         $notes = trim($_POST['notes'] ?? '');
+        $assignedStaffIds = $_POST['assigned_staff_ids'] ?? [];
 
         $errors = [];
 
@@ -307,6 +314,8 @@ class AdminEventController extends Controller
         if (!empty($errors)) {
             $venueModel = new Venue();
             $seriesModel = new EventSeries();
+            $userModel = new User();
+            $hostModel = new EventHost();
 
             $this->view('admin/events/edit', [
                 'title' => 'Edit Event',
@@ -314,6 +323,8 @@ class AdminEventController extends Controller
                 'event' => $event,
                 'venues' => $venueModel->active(),
                 'seriesList' => $seriesModel->active(),
+                'eventStaff' => $userModel->usersByRole(['host', 'event_manager']),
+                'assignedStaffIds' => array_map('intval', $assignedStaffIds),
                 'errors' => $errors,
                 'old' => $old,
             ]);
@@ -336,6 +347,9 @@ class AdminEventController extends Controller
             'event_status' => $eventStatus,
             'notes' => $notes !== '' ? $notes : null,
         ]);
+
+        $hostModel = new EventHost();
+        $hostModel->syncAssignments($id, $assignedStaffIds, Auth::id());
 
         $auditLog = new AuditLog();
         $auditLog->create(

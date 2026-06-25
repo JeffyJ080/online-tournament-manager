@@ -2,6 +2,7 @@
 $heading = $heading ?? 'Add Venue';
 $errors = $errors ?? [];
 $old = $old ?? [];
+$venueManagers = $venueManagers ?? [];
 
 function oldVenueValue(array $old, string $key): string
 {
@@ -10,7 +11,7 @@ function oldVenueValue(array $old, string $key): string
 
 function selectedVenueValue(array $old, string $key, string $value): string
 {
-    return (($old[$key] ?? 'active') === $value) ? 'selected' : '';
+    return ((string) ($old[$key] ?? 'active') === $value) ? 'selected' : '';
 }
 ?>
 
@@ -94,6 +95,18 @@ function selectedVenueValue(array $old, string $key, string $value): string
                 name="contact_phone"
                 value="<?= oldVenueValue($old, 'contact_phone') ?>"
             >
+        </div>
+
+        <div class="form-group">
+            <label for="venue_manager_user_id">Venue manager account</label>
+            <select id="venue_manager_user_id" name="venue_manager_user_id">
+                <option value="">No manager assigned</option>
+                <?php foreach ($venueManagers as $manager): ?>
+                    <option value="<?= (int) $manager['id'] ?>" <?= selectedVenueValue($old, 'venue_manager_user_id', (string) $manager['id']) ?>>
+                        <?= htmlspecialchars($manager['email']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <div class="form-group">

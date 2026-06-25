@@ -225,6 +225,38 @@ form {
     max-width: 520px;
 }
 
+.inline-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    max-width: none;
+}
+
+.inline-form select {
+    min-width: 130px;
+    padding: 0.55rem 0.7rem;
+}
+
+.compact-form {
+    margin-top: 1.25rem;
+}
+
+.round-results-form {
+    max-width: none;
+}
+
+.compact-details {
+    margin-top: 1rem;
+}
+
+.compact-details summary {
+    color: var(--gold-bright);
+    cursor: pointer;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -283,6 +315,12 @@ textarea:focus {
 .alert-danger {
     background: rgba(218, 54, 51, 0.12);
     border-color: rgba(218, 54, 51, 0.4);
+    color: var(--text);
+}
+
+.alert-success {
+    background: rgba(46, 160, 67, 0.14);
+    border-color: rgba(46, 160, 67, 0.4);
     color: var(--text);
 }
 
@@ -527,7 +565,9 @@ button:disabled,
 }
 
 .status-pending,
-.status-unpaid {
+.status-unpaid,
+.status-scheduled,
+.status-setup {
     background: rgba(240, 180, 42, 0.14);
     color: var(--gold-bright);
     border: 1px solid rgba(240, 180, 42, 0.35);
@@ -683,4 +723,178 @@ button:disabled,
     background: rgba(218, 54, 51, 0.12);
     color: #ff7b72;
     border: 1px solid rgba(218, 54, 51, 0.35);
+}
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.profile-layout .card:last-child {
+    grid-column: 1 / -1;
+}
+
+.profile-summary {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.profile-summary div {
+    padding: 0.9rem;
+    border-radius: var(--radius-sm);
+    background: rgba(8, 13, 26, 0.42);
+    border: 1px solid rgba(216, 226, 240, 0.08);
+}
+
+.profile-summary span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-bottom: 0.25rem;
+}
+
+.profile-summary strong {
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    :root {
+        --radius: 12px;
+        --radius-sm: 8px;
+    }
+
+    body {
+        background: var(--bg);
+    }
+
+    nav {
+        gap: 0.9rem;
+        padding: 0.85rem 1rem;
+    }
+
+    nav > a {
+        font-size: 1rem;
+    }
+
+    nav ul {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem;
+    }
+
+    nav li a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0.55rem 0.45rem;
+        border-radius: 8px;
+        background: rgba(216, 226, 240, 0.06);
+        font-size: 0.82rem;
+        text-align: center;
+    }
+
+    main {
+        padding: 1.75rem 0.9rem;
+    }
+
+    h1 {
+        font-size: clamp(2rem, 13vw, 3rem);
+        line-height: 1;
+        letter-spacing: 0;
+    }
+
+    p {
+        font-size: 0.98rem;
+    }
+
+    .card {
+        padding: 1rem;
+        box-shadow: none;
+    }
+
+    form {
+        max-width: none;
+    }
+
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        padding: 0.85rem;
+        font-size: 16px;
+    }
+
+    .hero-actions,
+    .table-actions,
+    .inline-form {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn,
+    .btn-sm,
+    .hero-actions .btn,
+    .table-actions .btn,
+    .table-actions a,
+    .inline-form .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .dashboard-header {
+        margin-bottom: 1.25rem;
+    }
+
+    .dashboard-grid,
+    .stat-grid,
+    .shortcut-grid,
+    .event-grid {
+        gap: 0.75rem;
+    }
+
+    .shortcut-card {
+        padding: 0.9rem;
+    }
+
+    .table-wrap {
+        border: 1px solid rgba(216, 226, 240, 0.08);
+        border-radius: 8px;
+    }
+
+    table {
+        min-width: 680px;
+    }
+
+    th,
+    td {
+        padding: 0.75rem;
+    }
+
+    .status-pill {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 420px) {
+    nav ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .event-meta,
+    .summary-list,
+    .profile-summary {
+        gap: 0.6rem;
+    }
 }

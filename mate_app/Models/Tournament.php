@@ -41,12 +41,27 @@ class Tournament extends Model
             $data['event_id'],
             $data['format'],
             $data['status'] ?? 'setup',
+            $data['notes'] ?? null,
             $data['total_rounds'] ?? 5,
             $data['current_round'] ?? 0,
-            $data['notes'] ?? null,
         ]);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    public function markRoundGenerated(int $id, int $roundNumber): bool
+    {
+        $sql = "
+            UPDATE tournaments
+            SET status = 'running',
+                current_round = ?,
+                started_at = COALESCE(started_at, NOW())
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$roundNumber, $id]);
     }
 
     public function updateSettings(int $id, int $totalRounds): bool
@@ -60,5 +75,19 @@ class Tournament extends Model
         $stmt = $this->db->prepare($sql);
 
         return $stmt->execute([$totalRounds, $id]);
+    }
+
+    public function complete(int $id): bool
+    {
+        $sql = "
+            UPDATE tournaments
+            SET status = 'completed',
+                completed_at = NOW()
+            WHERE id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([$id]);
     }
 }
