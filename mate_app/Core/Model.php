@@ -10,4 +10,9 @@ class Model
     {
         $this->db = Database::connect();
     }
+
+    protected function currentTimestamp(): string
+    {
+        return date('Y-m-d H:i:s');
+    }
 }

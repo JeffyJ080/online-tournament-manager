@@ -66,6 +66,21 @@ class EventHost
         return array_map('intval', array_column($stmt->fetchAll(), 'user_id'));
     }
 
+    public function countAssignedUsers(int $eventId): int
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM event_hosts
+            WHERE event_id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$eventId]);
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
+
     public function syncAssignments(int $eventId, array $userIds, int $assignedBy): void
     {
         $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));

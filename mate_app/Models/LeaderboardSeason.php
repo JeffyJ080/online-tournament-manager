@@ -66,6 +66,28 @@ class LeaderboardSeason extends Model
         return $season ?: null;
     }
 
+    public function findById(int $id): ?array
+    {
+        $sql = "
+            SELECT
+                leaderboard_seasons.*,
+                venues.name AS venue_name,
+                event_series.title AS series_title
+            FROM leaderboard_seasons
+            INNER JOIN venues ON leaderboard_seasons.venue_id = venues.id
+            LEFT JOIN event_series ON leaderboard_seasons.series_id = event_series.id
+            WHERE leaderboard_seasons.id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+
+        $season = $stmt->fetch();
+
+        return $season ?: null;
+    }
+
     public function create(array $data, array $rules): int
     {
         $sql = "
@@ -191,6 +213,68 @@ class LeaderboardSeason extends Model
             return false;
         }
 
+        return $this->recordTournamentResultsForSeason($tournamentId, $season, $tournament);
+    }
+
+    public function recalculateSeason(int $seasonId): int
+    {
+        $season = $this->findById($seasonId);
+
+        if (!$season) {
+            return 0;
+        }
+
+        $tournamentIds = $this->completedTournamentIdsForSeason($seasonId);
+        $recorded = 0;
+
+        foreach ($tournamentIds as $tournamentId) {
+            if ($this->hasAuthoritativeImportedResults($seasonId, $tournamentId)) {
+                continue;
+            }
+
+            $tournament = $this->findTournamentForResults($tournamentId);
+
+            if ($tournament && $this->recordTournamentResultsForSeason($tournamentId, $season, $tournament)) {
+                $recorded++;
+            }
+        }
+
+        return $recorded;
+    }
+
+    public function resultCountForSeason(int $seasonId): int
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) AS total
+            FROM leaderboard_results
+            WHERE season_id = ?
+        ");
+
+        $stmt->execute([$seasonId]);
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
+
+    private function findTournamentForResults(int $tournamentId): ?array
+    {
+        $sql = "
+            SELECT tournaments.*, events.id AS event_id, events.event_date
+            FROM tournaments
+            INNER JOIN events ON tournaments.event_id = events.id
+            WHERE tournaments.id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$tournamentId]);
+        $tournament = $stmt->fetch();
+
+        return $tournament ?: null;
+    }
+
+    private function recordTournamentResultsForSeason(int $tournamentId, array $season, array $tournament): bool
+    {
         $rules = $this->rulesForSeason((int) $season['id']);
 
         if (empty($rules)) {
@@ -251,15 +335,36 @@ class LeaderboardSeason extends Model
     {
         $sql = "
             SELECT
-                email,
-                MAX(player_name) AS player_name,
-                SUM(points) AS total_points,
-                COUNT(DISTINCT event_id) AS events_played,
-                MIN(placement) AS best_finish,
-                ROUND(AVG(points), 2) AS average_points
+                CASE
+                    WHEN event_registrations.player_id IS NOT NULL THEN CONCAT('player:', event_registrations.player_id)
+                    WHEN event_registrations.user_id IS NOT NULL THEN CONCAT('user:', event_registrations.user_id)
+                    ELSE CONCAT('email:', LOWER(TRIM(leaderboard_results.email)))
+                END AS participant_key,
+                COALESCE(
+                    MAX(NULLIF(players.display_name, '')),
+                    MAX(NULLIF(players.real_name, '')),
+                    MAX(NULLIF(event_registrations.display_name, '')),
+                    MAX(NULLIF(leaderboard_results.player_name, ''))
+                ) AS player_name,
+                COALESCE(
+                    MAX(NULLIF(users.email, '')),
+                    MAX(NULLIF(players.email, '')),
+                    MAX(NULLIF(event_registrations.email, '')),
+                    MAX(NULLIF(leaderboard_results.email, ''))
+                ) AS email,
+                SUM(leaderboard_results.points) AS total_points,
+                COUNT(DISTINCT leaderboard_results.event_id) AS events_played,
+                MIN(leaderboard_results.placement) AS best_finish,
+                ROUND(AVG(leaderboard_results.points), 2) AS average_points
             FROM leaderboard_results
-            WHERE season_id = ?
-            GROUP BY email
+            INNER JOIN event_registrations
+                ON leaderboard_results.event_registration_id = event_registrations.id
+            LEFT JOIN players
+                ON event_registrations.player_id = players.id
+            LEFT JOIN users
+                ON event_registrations.user_id = users.id
+            WHERE leaderboard_results.season_id = ?
+            GROUP BY participant_key
             ORDER BY total_points DESC,
                      best_finish ASC,
                      events_played DESC,
@@ -291,6 +396,49 @@ class LeaderboardSeason extends Model
         $stmt->execute([$seasonId]);
 
         return $stmt->fetchAll();
+    }
+
+    private function completedTournamentIdsForSeason(int $seasonId): array
+    {
+        $sql = "
+            SELECT tournaments.id
+            FROM leaderboard_seasons
+            INNER JOIN events
+                ON events.venue_id = leaderboard_seasons.venue_id
+                AND events.event_date BETWEEN leaderboard_seasons.starts_on AND leaderboard_seasons.ends_on
+                AND (
+                    leaderboard_seasons.series_id = events.series_id
+                    OR leaderboard_seasons.series_id IS NULL
+                )
+            INNER JOIN tournaments ON tournaments.event_id = events.id
+            WHERE leaderboard_seasons.id = ?
+              AND leaderboard_seasons.status = 'active'
+              AND events.event_status = 'completed'
+              AND tournaments.status = 'completed'
+            ORDER BY events.event_date ASC,
+                     tournaments.id ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$seasonId]);
+
+        return array_map('intval', array_column($stmt->fetchAll(), 'id'));
+    }
+
+    private function hasAuthoritativeImportedResults(int $seasonId, int $tournamentId): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT id
+            FROM leaderboard_results
+            WHERE season_id = ?
+              AND tournament_id = ?
+              AND notes LIKE 'Historical%'
+            LIMIT 1
+        ");
+
+        $stmt->execute([$seasonId, $tournamentId]);
+
+        return (bool) $stmt->fetch();
     }
 
     private function pointsForPlacement(int $placement, array $rules): int

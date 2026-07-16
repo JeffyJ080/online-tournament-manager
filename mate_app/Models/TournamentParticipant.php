@@ -47,6 +47,28 @@ class TournamentParticipant extends Model
         return $imported;
     }
 
+    public function missingCheckedInRegistrations(int $tournamentId, int $eventId): array
+    {
+        $sql = "
+            SELECT
+                event_registrations.*
+            FROM event_registrations
+            LEFT JOIN tournament_participants
+                ON tournament_participants.event_registration_id = event_registrations.id
+                AND tournament_participants.tournament_id = ?
+            WHERE event_registrations.event_id = ?
+              AND event_registrations.registration_status = 'checked_in'
+              AND tournament_participants.id IS NULL
+            ORDER BY event_registrations.registered_at ASC,
+                     event_registrations.id ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$tournamentId, $eventId]);
+
+        return $stmt->fetchAll();
+    }
+
     public function exists(int $tournamentId, int $registrationId): bool
     {
         $sql = "
@@ -84,13 +106,15 @@ class TournamentParticipant extends Model
         $sql = "
             SELECT
                 tournament_participants.*,
-                event_registrations.full_name,
-                event_registrations.display_name,
+                COALESCE(NULLIF(players.real_name, ''), event_registrations.full_name) AS full_name,
+                COALESCE(NULLIF(players.display_name, ''), NULLIF(event_registrations.display_name, '')) AS display_name,
                 event_registrations.email,
                 event_registrations.rating_category
             FROM tournament_participants
             INNER JOIN event_registrations
                 ON tournament_participants.event_registration_id = event_registrations.id
+            LEFT JOIN players
+                ON event_registrations.player_id = players.id
             WHERE tournament_participants.tournament_id = ?
             ORDER BY tournament_participants.seed_number ASC, tournament_participants.id ASC
         ";
@@ -101,18 +125,34 @@ class TournamentParticipant extends Model
         return $stmt->fetchAll();
     }
 
+    public function countForTournament(int $tournamentId): int
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) AS total
+            FROM tournament_participants
+            WHERE tournament_id = ?
+        ");
+
+        $stmt->execute([$tournamentId]);
+        $result = $stmt->fetch();
+
+        return (int) ($result['total'] ?? 0);
+    }
+
     public function activeForTournament(int $tournamentId): array
     {
         $sql = "
             SELECT
                 tournament_participants.*,
-                event_registrations.full_name,
-                event_registrations.display_name,
+                COALESCE(NULLIF(players.real_name, ''), event_registrations.full_name) AS full_name,
+                COALESCE(NULLIF(players.display_name, ''), NULLIF(event_registrations.display_name, '')) AS display_name,
                 event_registrations.email,
                 event_registrations.rating_category
             FROM tournament_participants
             INNER JOIN event_registrations
                 ON tournament_participants.event_registration_id = event_registrations.id
+            LEFT JOIN players
+                ON event_registrations.player_id = players.id
             WHERE tournament_participants.tournament_id = ?
               AND tournament_participants.status = 'active'
             ORDER BY tournament_participants.current_score DESC,
@@ -123,7 +163,7 @@ class TournamentParticipant extends Model
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$tournamentId]);
 
-        return $stmt->fetchAll();
+        return $this->applyTieBreaks($tournamentId, $stmt->fetchAll());
     }
 
     public function standings(int $tournamentId): array
@@ -131,13 +171,15 @@ class TournamentParticipant extends Model
         $sql = "
             SELECT
                 tournament_participants.*,
-                event_registrations.full_name,
-                event_registrations.display_name,
+                COALESCE(NULLIF(players.real_name, ''), event_registrations.full_name) AS full_name,
+                COALESCE(NULLIF(players.display_name, ''), NULLIF(event_registrations.display_name, '')) AS display_name,
                 event_registrations.email,
                 event_registrations.rating_category
             FROM tournament_participants
             INNER JOIN event_registrations
                 ON tournament_participants.event_registration_id = event_registrations.id
+            LEFT JOIN players
+                ON event_registrations.player_id = players.id
             WHERE tournament_participants.tournament_id = ?
             ORDER BY tournament_participants.current_score DESC,
                      tournament_participants.seed_number ASC,
@@ -147,7 +189,7 @@ class TournamentParticipant extends Model
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$tournamentId]);
 
-        return $stmt->fetchAll();
+        return $this->applyTieBreaks($tournamentId, $stmt->fetchAll());
     }
 
     public function forRegistrationIds(int $tournamentId, array $registrationIds): array
@@ -163,13 +205,15 @@ class TournamentParticipant extends Model
         $sql = "
             SELECT
                 tournament_participants.*,
-                event_registrations.full_name,
-                event_registrations.display_name,
+                COALESCE(NULLIF(players.real_name, ''), event_registrations.full_name) AS full_name,
+                COALESCE(NULLIF(players.display_name, ''), NULLIF(event_registrations.display_name, '')) AS display_name,
                 event_registrations.email,
                 event_registrations.rating_category
             FROM tournament_participants
             INNER JOIN event_registrations
                 ON tournament_participants.event_registration_id = event_registrations.id
+            LEFT JOIN players
+                ON event_registrations.player_id = players.id
             WHERE tournament_participants.tournament_id = ?
               AND tournament_participants.event_registration_id IN ($placeholders)
             ORDER BY tournament_participants.seed_number ASC,
@@ -252,5 +296,84 @@ class TournamentParticipant extends Model
             'standard' => 1200,
             default => 800,
         };
+    }
+
+    private function applyTieBreaks(int $tournamentId, array $standings): array
+    {
+        $scores = [];
+
+        foreach ($standings as $standing) {
+            $scores[(int) $standing['event_registration_id']] = (float) $standing['current_score'];
+        }
+
+        $matches = $this->completedMatchesForTieBreaks($tournamentId);
+        $opponents = [];
+        $headToHead = [];
+        $sonnebornBerger = [];
+
+        foreach ($matches as $match) {
+            $whiteId = (int) ($match['white_registration_id'] ?? 0);
+            $blackId = (int) ($match['black_registration_id'] ?? 0);
+
+            if ($whiteId <= 0 || $blackId <= 0) {
+                continue;
+            }
+
+            $whiteScore = (float) ($match['white_score'] ?? 0);
+            $blackScore = (float) ($match['black_score'] ?? 0);
+
+            $opponents[$whiteId][] = $blackId;
+            $opponents[$blackId][] = $whiteId;
+            $headToHead[$whiteId][$blackId] = ($headToHead[$whiteId][$blackId] ?? 0) + $whiteScore;
+            $headToHead[$blackId][$whiteId] = ($headToHead[$blackId][$whiteId] ?? 0) + $blackScore;
+            $sonnebornBerger[$whiteId] = ($sonnebornBerger[$whiteId] ?? 0) + ($whiteScore * ($scores[$blackId] ?? 0));
+            $sonnebornBerger[$blackId] = ($sonnebornBerger[$blackId] ?? 0) + ($blackScore * ($scores[$whiteId] ?? 0));
+        }
+
+        foreach ($standings as &$standing) {
+            $registrationId = (int) $standing['event_registration_id'];
+            $standing['buchholz'] = 0.0;
+            $standing['sonneborn_berger'] = round($sonnebornBerger[$registrationId] ?? 0, 2);
+            $standing['head_to_head'] = 0.0;
+
+            foreach ($opponents[$registrationId] ?? [] as $opponentId) {
+                $standing['buchholz'] += $scores[$opponentId] ?? 0;
+                $standing['head_to_head'] += $headToHead[$registrationId][$opponentId] ?? 0;
+            }
+
+            $standing['buchholz'] = round($standing['buchholz'], 2);
+            $standing['head_to_head'] = round($standing['head_to_head'], 2);
+        }
+        unset($standing);
+
+        usort($standings, function (array $a, array $b): int {
+            foreach (['current_score', 'buchholz', 'sonneborn_berger', 'head_to_head'] as $key) {
+                $compare = (float) $b[$key] <=> (float) $a[$key];
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+            }
+
+            return ((int) $a['seed_number'] <=> (int) $b['seed_number'])
+                ?: ((int) $a['id'] <=> (int) $b['id']);
+        });
+
+        return $standings;
+    }
+
+    private function completedMatchesForTieBreaks(int $tournamentId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT *
+            FROM matches
+            WHERE tournament_id = ?
+              AND status = 'completed'
+              AND result IN ('white_win', 'black_win', 'draw')
+        ");
+
+        $stmt->execute([$tournamentId]);
+
+        return $stmt->fetchAll();
     }
 }

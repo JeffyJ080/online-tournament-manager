@@ -112,9 +112,9 @@ function selectedVenueEditValue(array $old, string $key, string $value): string
         </div>
 
         <div class="form-group">
-            <label for="venue_manager_user_id">Venue manager account</label>
+            <label for="venue_manager_user_id">Venue Partner account</label>
             <select id="venue_manager_user_id" name="venue_manager_user_id">
-                <option value="">No manager assigned</option>
+                <option value="">No Venue Partner assigned</option>
                 <?php foreach ($venueManagers as $manager): ?>
                     <option value="<?= (int) $manager['id'] ?>" <?= selectedVenueEditValue($old, 'venue_manager_user_id', (string) $manager['id']) ?>>
                         <?= htmlspecialchars($manager['email']) ?>

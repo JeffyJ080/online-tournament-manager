@@ -3,6 +3,7 @@ $heading = $heading ?? 'Register for Event';
 $event = $event ?? [];
 $errors = $errors ?? [];
 $old = $old ?? [];
+$player = $player ?? null;
 $spotsLeft = $spots_left ?? 0;
 $activeRegistrations = $active_registrations ?? 0;
 
@@ -62,7 +63,44 @@ function regMoney($amount): string
             </div>
         <?php endif; ?>
 
+        <?php if ($player): ?>
+            <section class="card auth-card no-margin profile-register-card">
+                <h2>Register with your profile</h2>
+                <p>
+                    <?= htmlspecialchars($player['display_name'] ?: $player['real_name']) ?>
+                    · <?= htmlspecialchars($player['email']) ?>
+                    · <?= htmlspecialchars(ucwords($player['rating_category'])) ?>
+                </p>
+
+                <form method="POST" action="index.php?page=register-event-submit" class="compact-form">
+                    <input type="hidden" name="event_id" value="<?= (int) ($event['id'] ?? 0) ?>">
+                    <input type="hidden" name="use_profile" value="1">
+
+                    <div class="form-group">
+                        <label for="profile_payment_method">Payment method</label>
+                        <select id="profile_payment_method" name="payment_method">
+                            <option value="cash">Cash at event</option>
+                            <option value="eft">EFT</option>
+                        </select>
+                    </div>
+
+                    <div class="hero-actions">
+                        <button class="btn" type="submit" <?= $spotsLeft <= 0 ? 'disabled' : '' ?>>
+                            Register Me
+                        </button>
+                        <a class="btn btn-outline" href="index.php?page=my-profile">Edit Profile</a>
+                    </div>
+                </form>
+            </section>
+
+            <br>
+        <?php endif; ?>
+
         <section class="card auth-card no-margin">
+            <?php if ($player): ?>
+                <h2>Use different details</h2>
+            <?php endif; ?>
+
             <form method="POST" action="index.php?page=register-event-submit">
                 <input type="hidden" name="event_id" value="<?= (int) ($event['id'] ?? 0) ?>">
 

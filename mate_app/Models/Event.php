@@ -55,6 +55,29 @@ class Event extends Model
         return $stmt->fetchAll();
     }
 
+    public function completedPublic(): array
+    {
+        $sql = "
+            SELECT
+                events.*,
+                venues.name AS venue_name,
+                venues.city AS venue_city,
+                tournaments.id AS tournament_id,
+                tournaments.completed_at
+            FROM events
+            INNER JOIN venues ON events.venue_id = venues.id
+            INNER JOIN tournaments ON tournaments.event_id = events.id
+            WHERE events.event_status = 'completed'
+              AND tournaments.status = 'completed'
+            ORDER BY events.event_date DESC, events.start_time DESC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "
@@ -163,6 +186,22 @@ class Event extends Model
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$slug]);
+
+        return (bool) $stmt->fetch();
+    }
+
+    public function existsForSeriesDate(int $seriesId, string $eventDate): bool
+    {
+        $sql = "
+            SELECT id
+            FROM events
+            WHERE series_id = ?
+              AND event_date = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$seriesId, $eventDate]);
 
         return (bool) $stmt->fetch();
     }

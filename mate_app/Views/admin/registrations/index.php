@@ -34,6 +34,7 @@ function adminRegLabel(?string $value): string
             <h2>All Registrations</h2>
             <p>Player lists are private and only visible to admin/event staff.</p>
         </div>
+        <a class="btn btn-outline" href="index.php?page=export-registrations">Export CSV</a>
     </div>
 
     <?php if (empty($registrations)): ?>

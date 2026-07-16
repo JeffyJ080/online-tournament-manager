@@ -58,9 +58,9 @@ $matchesPlayed = $matchesPlayed ?? 0;
             <span>Compare your tournament score against the public leaderboard.</span>
         </a>
 
-        <a class="shortcut-card" href="index.php?page=leaderboard">
+        <a class="shortcut-card" href="index.php?page=my-match-history">
             <strong>Match History</strong>
-            <span>Review standings and results through event live views.</span>
+            <span>Review your completed games, record, and rating activity.</span>
         </a>
     </div>
 </section>

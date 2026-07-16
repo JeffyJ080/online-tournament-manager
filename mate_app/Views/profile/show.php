@@ -2,6 +2,8 @@
 $user = $user ?? [];
 $player = $player ?? null;
 $registrations = $registrations ?? [];
+$unlinkedRegistrations = $unlinkedRegistrations ?? [];
+$matches = $matches ?? [];
 $profileErrors = $profileErrors ?? [];
 $success = $success ?? null;
 
@@ -13,6 +15,11 @@ function profileValue(?array $player, string $key): string
 function profileSelected(?array $player, string $value): string
 {
     return (($player['rating_category'] ?? '') === $value) ? 'selected' : '';
+}
+
+function visibilitySelected(?array $player, string $value): string
+{
+    return (($player['profile_visibility'] ?? 'private') === $value) ? 'selected' : '';
 }
 ?>
 
@@ -41,13 +48,23 @@ function profileSelected(?array $player, string $value): string
             </div>
             <div>
                 <span>Role</span>
-                <strong><?= htmlspecialchars(ucwords(str_replace('_', ' ', $user['role_name'] ?? 'user'))) ?></strong>
+                <strong><?= htmlspecialchars(($user['role_name'] ?? '') === 'venue_manager' ? 'Venue Partner' : ucwords(str_replace('_', ' ', $user['role_name'] ?? 'user'))) ?></strong>
             </div>
             <div>
                 <span>Status</span>
                 <strong><?= htmlspecialchars(ucwords($user['status'] ?? 'active')) ?></strong>
             </div>
+            <div>
+                <span>Email Verified</span>
+                <strong><?= !empty($user['email_verified_at']) ? 'Yes' : 'Pending' ?></strong>
+            </div>
         </div>
+
+        <?php if (empty($user['email_verified_at'])): ?>
+            <div class="alert">
+                Email verification is still pending. Some account-link and history features work best once this email is confirmed.
+            </div>
+        <?php endif; ?>
     </div>
 
     <?php if ($player): ?>
@@ -90,8 +107,20 @@ function profileSelected(?array $player, string $value): string
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label for="profile_visibility">Public profile</label>
+                    <select id="profile_visibility" name="profile_visibility">
+                        <option value="private" <?= visibilitySelected($player, 'private') ?>>Private</option>
+                        <option value="public" <?= visibilitySelected($player, 'public') ?>>Public</option>
+                    </select>
+                    <p class="field-help">Public profiles show your rating, recent activity, and tournament records. Private profiles stay hidden from public player pages.</p>
+                </div>
+
                 <div class="hero-actions">
                     <button class="btn" type="submit">Save Profile</button>
+                    <?php if (($player['profile_visibility'] ?? 'private') === 'public'): ?>
+                        <a class="btn btn-outline" href="index.php?page=player&slug=<?= urlencode($player['public_slug'] ?? '') ?>">View Public Profile</a>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
@@ -111,6 +140,33 @@ function profileSelected(?array $player, string $value): string
 </section>
 
 <?php if ($player): ?>
+    <?php if (!empty($unlinkedRegistrations)): ?>
+        <section class="card">
+            <div class="section-header">
+                <div>
+                    <h2>Claim Previous Walk-ins</h2>
+                    <p>These unlinked registrations use your account email.</p>
+                </div>
+                <form method="POST" action="index.php?page=my-profile-claim-history">
+                    <button class="btn" type="submit">Claim Matching History</button>
+                </form>
+            </div>
+        </section>
+
+        <br>
+    <?php else: ?>
+        <section class="card profile-register-card">
+            <div class="section-header">
+                <div>
+                    <h2>Previous Walk-ins</h2>
+                    <p>If a walk-in was registered with this email, it will appear here for claiming. Hosts can also send an invite or link it manually.</p>
+                </div>
+            </div>
+        </section>
+
+        <br>
+    <?php endif; ?>
+
     <section class="card">
         <div class="section-header">
             <div>
@@ -150,6 +206,45 @@ function profileSelected(?array $player, string $value): string
                                         <?= htmlspecialchars(str_replace('_', ' ', $registration['payment_status'])) ?>
                                     </span>
                                 </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <br>
+
+    <section class="card">
+        <div class="section-header">
+            <div>
+                <h2>Recent Matches</h2>
+                <p>Your latest completed match results.</p>
+            </div>
+            <a class="btn btn-outline btn-sm" href="index.php?page=my-match-history">View All</a>
+        </div>
+
+        <?php if (empty($matches)): ?>
+            <p>No completed matches linked to this account yet.</p>
+        <?php else: ?>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>White</th>
+                            <th>Black</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($matches as $match): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($match['event_title']) ?></td>
+                                <td><?= htmlspecialchars($match['white_display_name'] ?: $match['white_name']) ?></td>
+                                <td><?= htmlspecialchars($match['black_display_name'] ?: ($match['black_name'] ?? 'Bye')) ?></td>
+                                <td><?= htmlspecialchars(ucwords(str_replace('_', ' ', $match['result']))) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

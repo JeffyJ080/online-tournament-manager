@@ -3,6 +3,7 @@ $event = $event ?? [];
 $tournament = $tournament ?? null;
 $checkedInPlayers = $checkedInPlayers ?? [];
 $participants = $participants ?? [];
+$lateEntries = $lateEntries ?? [];
 $rounds = $rounds ?? [];
 $matches = $matches ?? [];
 $standings = $standings ?? [];
@@ -10,6 +11,7 @@ $latestRound = $latestRound ?? null;
 $eventClosed = in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
 $tournamentCompleted = ($tournament['status'] ?? '') === 'completed';
 $readOnly = $eventClosed || $tournamentCompleted;
+$canAdminCorrect = $readOnly && Auth::hasAnyRole(['admin', 'super_admin']);
 $isKnockout = ($tournament['format'] ?? '') === 'knockout';
 
 function tmLabel(?string $value): string
@@ -73,9 +75,19 @@ if ($latestRound && !$latestRoundComplete) {
             <a class="btn btn-outline" href="index.php?page=live-display&event=<?= (int) ($event['id'] ?? 0) ?>" target="_blank">
                 Open Second Screen
             </a>
+            <a class="btn btn-outline" href="index.php?page=timer-control&event=<?= (int) ($event['id'] ?? 0) ?>">
+                Timer Remote
+            </a>
             <a class="btn btn-outline" href="index.php?page=live-tournament&event=<?= (int) ($event['id'] ?? 0) ?>" target="_blank">
                 Open Live View
             </a>
+            <a class="btn btn-outline" href="index.php?page=export-tournament-results&id=<?= (int) ($event['id'] ?? 0) ?>">
+                Export Results
+            </a>
+            <a class="btn btn-outline" href="index.php?page=export-pairings&id=<?= (int) ($event['id'] ?? 0) ?>">
+                Export Pairings
+            </a>
+            <button class="btn btn-outline" type="button" onclick="window.print()">Print Pairings</button>
         </div>
     </div>
 </section>
@@ -84,6 +96,9 @@ if ($latestRound && !$latestRoundComplete) {
     <section class="card">
         <h2>Review Mode</h2>
         <p>This event or tournament is completed, so pairings, participants, and match results are locked.</p>
+        <?php if ($canAdminCorrect): ?>
+            <p>Admin correction mode is available below for fixing recorded results. Corrections are audit logged.</p>
+        <?php endif; ?>
     </section>
 
     <br/>
@@ -155,7 +170,50 @@ if ($latestRound && !$latestRoundComplete) {
         </div>
 
         <?php if (!empty($matches)): ?>
-            <p>Participant import is locked because pairings have already been generated.</p>
+            <p>Initial participant import is locked because pairings have already been generated.</p>
+        <?php endif; ?>
+
+        <?php if (
+            !$readOnly
+            && !empty($matches)
+            && in_array(($tournament['format'] ?? ''), ['swiss', 'weekly_points'], true)
+        ): ?>
+            <div class="alert">
+                <div class="section-header">
+                    <div>
+                        <strong>Late Entries</strong>
+                        <p>
+                            <?= count($lateEntries) ?> checked-in player<?= count($lateEntries) === 1 ? '' : 's' ?> not yet in the tournament.
+                            Late entries join from the next generated round on 0 points.
+                        </p>
+                    </div>
+
+                    <form method="POST" action="index.php?page=tournament-add-late-entries">
+                        <input type="hidden" name="event_id" value="<?= (int) ($event['id'] ?? 0) ?>">
+                        <button class="btn" type="submit" <?= empty($lateEntries) ? 'disabled' : '' ?>>
+                            Add Late Entries
+                        </button>
+                    </form>
+                </div>
+
+                <?php if (!empty($lateEntries)): ?>
+                    <div class="compact-list">
+                        <?php foreach ($lateEntries as $lateEntry): ?>
+                            <span class="status-pill status-scheduled">
+                                <?= htmlspecialchars($lateEntry['display_name'] ?: $lateEntry['full_name']) ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php elseif (
+            !$readOnly
+            && !empty($matches)
+            && !in_array(($tournament['format'] ?? ''), ['swiss', 'weekly_points'], true)
+        ): ?>
+            <div class="alert">
+                Late entries are blocked once pairings exist for this format.
+            </div>
         <?php endif; ?>
 
         <?php if (empty($participants)): ?>
@@ -250,7 +308,7 @@ if ($latestRound && !$latestRoundComplete) {
         <?php elseif (empty($visibleMatches)): ?>
             <p>No pairings generated yet.</p>
         <?php else: ?>
-            <form method="POST" action="index.php?page=tournament-submit-round-results" class="compact-form round-results-form">
+            <form method="POST" action="index.php?page=<?= $canAdminCorrect ? 'admin-correct-round-results' : 'tournament-submit-round-results' ?>" class="compact-form round-results-form">
                 <input type="hidden" name="event_id" value="<?= (int) ($event['id'] ?? 0) ?>">
 
                 <div class="table-wrap">
@@ -279,7 +337,7 @@ if ($latestRound && !$latestRoundComplete) {
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (!$readOnly && !empty($match['black_registration_id'])): ?>
+                                        <?php if ((!$readOnly || $canAdminCorrect) && !empty($match['black_registration_id'])): ?>
                                             <select name="results[<?= (int) ($match['id'] ?? 0) ?>]">
                                                 <option value="">No change</option>
                                                 <option value="white_win" <?= ($match['result'] ?? '') === 'white_win' ? 'selected' : '' ?>>White win</option>
@@ -299,9 +357,11 @@ if ($latestRound && !$latestRoundComplete) {
                     </table>
                 </div>
 
-                <?php if (!$readOnly): ?>
+                <?php if (!$readOnly || $canAdminCorrect): ?>
                     <div class="hero-actions">
-                        <button class="btn" type="submit">Save Visible Results</button>
+                        <button class="btn" type="submit">
+                            <?= $canAdminCorrect ? 'Save Admin Corrections' : 'Save Visible Results' ?>
+                        </button>
                     </div>
                 <?php endif; ?>
             </form>
@@ -369,6 +429,9 @@ if ($latestRound && !$latestRoundComplete) {
                             <th>Rank</th>
                             <th>Player</th>
                             <th>Score</th>
+                            <th>Buchholz</th>
+                            <th>SB</th>
+                            <th>H2H</th>
                             <th>Seed</th>
                             <th>Status</th>
                         </tr>
@@ -384,6 +447,9 @@ if ($latestRound && !$latestRoundComplete) {
                                     <span class="muted"><?= htmlspecialchars($standing['email']) ?></span>
                                 </td>
                                 <td><?= htmlspecialchars((string) ($standing['current_score'] ?? '0.0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['buchholz'] ?? '0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['sonneborn_berger'] ?? '0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['head_to_head'] ?? '0')) ?></td>
                                 <td><?= (int) ($standing['seed_number'] ?? 0) ?></td>
                                 <td>
                                     <span class="status-pill status-<?= htmlspecialchars($standing['status']) ?>">

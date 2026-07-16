@@ -1,6 +1,7 @@
 <?php
 $heading = $heading ?? 'Assigned Events';
 $events = $events ?? [];
+$readiness = $readiness ?? [];
 
 function hostEventDate(?string $date): string
 {
@@ -38,6 +39,7 @@ function hostEventLabel(?string $value): string
         <?php foreach ($events as $event): ?>
             <?php
             $eventClosed = in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
+            $eventReadiness = $readiness[(int) $event['id']] ?? ['status' => 'todo', 'items' => []];
             ?>
             <article class="card event-card">
                 <div>
@@ -74,9 +76,21 @@ function hostEventLabel(?string $value): string
                     </div>
                 </div>
 
+                <div class="readiness-panel readiness-<?= htmlspecialchars($eventReadiness['status'] ?? 'todo') ?>">
+                    <strong>Event readiness</strong>
+
+                    <ul>
+                        <?php foreach (array_slice($eventReadiness['items'] ?? [], 0, 6) as $item): ?>
+                            <li class="readiness-item readiness-item-<?= htmlspecialchars($item['state'] ?? 'todo') ?>">
+                                <?= htmlspecialchars($item['label'] ?? '') ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+
                 <div class="hero-actions">
                     <a class="btn btn-outline" href="index.php?page=host-event-registrations&id=<?= (int) $event['id'] ?>">
-                        <?= $eventClosed ? 'Review Event' : 'Manage Event' ?>
+                        <?= $eventClosed ? 'Review Event' : 'Check-in & Walk-ins' ?>
                     </a>
                     <a class="btn btn-outline" href="index.php?page=live-tournament&event=<?= (int) $event['id'] ?>">
                         Live View

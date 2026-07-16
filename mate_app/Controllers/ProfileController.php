@@ -9,6 +9,8 @@ require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Models/PasswordReset.php';
+require_once __DIR__ . '/../Models/WalkInInvitation.php';
+require_once __DIR__ . '/../Helpers/app_url.php';
 
 class ProfileController extends Controller
 {
@@ -23,6 +25,10 @@ class ProfileController extends Controller
         $user = $userModel->findById(Auth::id());
         $player = $playerModel->findByUserId(Auth::id());
         $registrations = Auth::role() === 'player' ? $registrationModel->forUser(Auth::id()) : [];
+        $unlinkedRegistrations = ($user && Auth::role() === 'player')
+            ? $registrationModel->unlinkedForEmail($user['email'])
+            : [];
+        $matches = Auth::role() === 'player' ? $registrationModel->matchHistoryForUser(Auth::id()) : [];
 
         $this->view('profile/show', [
             'title' => 'My Profile',
@@ -30,6 +36,8 @@ class ProfileController extends Controller
             'user' => $user,
             'player' => $player,
             'registrations' => array_slice($registrations, 0, 5),
+            'unlinkedRegistrations' => $unlinkedRegistrations,
+            'matches' => array_slice($matches, 0, 8),
             'profileErrors' => [],
             'passwordErrors' => [],
             'success' => $_SESSION['profile_success'] ?? null,
@@ -59,6 +67,7 @@ class ProfileController extends Controller
         $displayName = trim($_POST['display_name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
         $ratingCategory = trim($_POST['rating_category'] ?? 'beginner');
+        $profileVisibility = trim($_POST['profile_visibility'] ?? 'private');
 
         $errors = [];
 
@@ -68,6 +77,10 @@ class ProfileController extends Controller
 
         if (!in_array($ratingCategory, ['beginner', 'casual', 'standard'], true)) {
             $errors[] = 'Invalid rating category selected.';
+        }
+
+        if (!in_array($profileVisibility, ['public', 'private'], true)) {
+            $errors[] = 'Invalid profile visibility selected.';
         }
 
         if (!empty($errors)) {
@@ -80,7 +93,8 @@ class ProfileController extends Controller
             $realName,
             $displayName !== '' ? $displayName : null,
             $phone !== '' ? $phone : null,
-            $ratingCategory
+            $ratingCategory,
+            $profileVisibility
         );
 
         $auditLog = new AuditLog();
@@ -96,6 +110,135 @@ class ProfileController extends Controller
 
         header('Location: index.php?page=my-profile');
         exit;
+    }
+
+    public function claimHistory(): void
+    {
+        RequireAuth::anyRole(['player']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=my-profile');
+            exit;
+        }
+
+        $userModel = new User();
+        $playerModel = new Player();
+        $registrationModel = new EventRegistration();
+
+        $user = $userModel->findById(Auth::id());
+        $player = $playerModel->findByUserId(Auth::id());
+
+        if (!$user || !$player) {
+            header('Location: index.php?page=my-profile');
+            exit;
+        }
+
+        $claimed = $registrationModel->claimMatchingEmail($user['email'], Auth::id(), (int) $player['id']);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            Auth::id(),
+            'walkin_history_claimed',
+            'player',
+            (int) $player['id'],
+            'Claimed ' . $claimed . ' previous unlinked registrations by email.'
+        );
+
+        $_SESSION['profile_success'] = $claimed . ' previous registration(s) linked to your account.';
+
+        header('Location: index.php?page=my-profile');
+        exit;
+    }
+
+    public function matchHistory(): void
+    {
+        RequireAuth::anyRole(['player']);
+
+        $registrationModel = new EventRegistration();
+        $playerModel = new Player();
+        $matches = $registrationModel->matchHistoryForUser(Auth::id());
+        $player = $playerModel->findByUserId(Auth::id());
+        $stats = $player ? $playerModel->publicProfileStats((int) $player['id']) : [];
+        $ratingHistory = $player ? $playerModel->ratingHistoryForUser(Auth::id()) : [];
+
+        $this->view('profile/match_history', [
+            'title' => 'Match History',
+            'heading' => 'Match History',
+            'matches' => $matches,
+            'player' => $player,
+            'stats' => $stats,
+            'ratingHistory' => $ratingHistory,
+        ]);
+    }
+
+    public function acceptWalkInInvite(): void
+    {
+        $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
+        $invitationModel = new WalkInInvitation();
+        $invitation = $token !== '' ? $invitationModel->findValidByToken($token) : null;
+
+        if (!$invitation) {
+            $this->view('profile/accept_walkin_invite', [
+                'title' => 'Walk-in Invitation',
+                'heading' => 'Walk-in invitation',
+                'token' => '',
+                'invitation' => null,
+                'message' => 'This invitation link is invalid or has expired.',
+                'success' => false,
+            ]);
+            return;
+        }
+
+        if (!Auth::check()) {
+            $this->view('profile/accept_walkin_invite', [
+                'title' => 'Walk-in Invitation',
+                'heading' => 'Link your walk-in result',
+                'token' => $token,
+                'invitation' => $invitation,
+                'message' => 'Log in or create an account with this email, then open this link again to claim the result.',
+                'success' => false,
+            ]);
+            return;
+        }
+
+        $userModel = new User();
+        $playerModel = new Player();
+        $registrationModel = new EventRegistration();
+        $user = $userModel->findById(Auth::id());
+        $player = $playerModel->findByUserId(Auth::id());
+
+        if (!$user || !$player || strtolower($user['email']) !== strtolower($invitation['email'])) {
+            $this->view('profile/accept_walkin_invite', [
+                'title' => 'Walk-in Invitation',
+                'heading' => 'Link your walk-in result',
+                'token' => $token,
+                'invitation' => $invitation,
+                'message' => 'This invitation must be accepted by an account using ' . $invitation['email'] . '.',
+                'success' => false,
+            ]);
+            return;
+        }
+
+        $registrationModel->linkToPlayer((int) $invitation['event_registration_id'], Auth::id(), (int) $player['id']);
+        $invitationModel->markAccepted((int) $invitation['id'], Auth::id());
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            Auth::id(),
+            'walkin_invitation_accepted',
+            'event_registration',
+            (int) $invitation['event_registration_id'],
+            'Player accepted walk-in account invitation.'
+        );
+
+        $this->view('profile/accept_walkin_invite', [
+            'title' => 'Walk-in Invitation',
+            'heading' => 'Walk-in linked',
+            'token' => '',
+            'invitation' => $invitation,
+            'message' => 'This walk-in result is now linked to your account.',
+            'success' => true,
+        ]);
     }
 
     public function changePassword(): void
@@ -128,8 +271,7 @@ class ProfileController extends Controller
         $resetModel = new PasswordReset();
         $resetModel->create($userId, $token, $expiresAt);
 
-        $appConfig = require __DIR__ . '/../../mate_config/app.php';
-        $resetUrl = rtrim($appConfig['app_url'], '/') . '/index.php?page=reset-password&token=' . urlencode($token);
+        $resetUrl = absolute_url('index.php?page=reset-password&token=' . urlencode($token));
 
         $body = '
             <p>A password reset was requested for your Mate Tournaments account.</p>
@@ -158,13 +300,17 @@ class ProfileController extends Controller
         $registrationModel = new EventRegistration();
 
         $registrations = Auth::role() === 'player' ? $registrationModel->forUser(Auth::id()) : [];
+        $user = $userModel->findById(Auth::id());
+        $matches = Auth::role() === 'player' ? $registrationModel->matchHistoryForUser(Auth::id()) : [];
 
         $this->view('profile/show', [
             'title' => 'My Profile',
             'heading' => 'My Profile',
-            'user' => $userModel->findById(Auth::id()),
+            'user' => $user,
             'player' => $playerModel->findByUserId(Auth::id()),
             'registrations' => array_slice($registrations, 0, 5),
+            'unlinkedRegistrations' => ($user && Auth::role() === 'player') ? $registrationModel->unlinkedForEmail($user['email']) : [],
+            'matches' => array_slice($matches, 0, 8),
             'profileErrors' => $profileErrors,
             'passwordErrors' => $passwordErrors,
             'success' => null,

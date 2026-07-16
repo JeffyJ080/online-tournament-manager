@@ -7,7 +7,7 @@ $email = $email ?? '';
     <h1><?= htmlspecialchars($heading) ?></h1>
 
     <p>
-        Your Mate Tournaments account has been created.
+        Your Mate Tournaments account has been created. A verification link has been sent to your email address.
     </p>
 
     <?php if ($email !== ''): ?>

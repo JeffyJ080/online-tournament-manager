@@ -15,6 +15,7 @@ require_once __DIR__ . '/../Models/TournamentParticipant.php';
 require_once __DIR__ . '/../Models/LeaderboardSeason.php';
 require_once __DIR__ . '/../Models/Match.php';
 require_once __DIR__ . '/../Models/Round.php';
+require_once __DIR__ . '/../Helpers/LiveTimer.php';
 
 class PublicController extends Controller
 {
@@ -111,6 +112,7 @@ class PublicController extends Controller
         $spotsLeft = max(0, (int) $event['max_players'] - $activeRegistrations);
 
         $old = [];
+        $player = null;
 
         if (Auth::check()) {
             $playerModel = new Player();
@@ -135,6 +137,7 @@ class PublicController extends Controller
             'active_registrations' => $activeRegistrations,
             'errors' => [],
             'old' => $old,
+            'player' => $player,
         ]);
     }
 
@@ -152,11 +155,26 @@ class PublicController extends Controller
         $phone = trim($_POST['phone'] ?? '');
         $ratingCategory = trim($_POST['rating_category'] ?? 'beginner');
         $paymentMethod = trim($_POST['payment_method'] ?? 'cash');
+        $useProfile = Auth::check() && ($_POST['use_profile'] ?? '') === '1';
 
         $errors = [];
 
         $eventModel = new Event();
         $registrationModel = new EventRegistration();
+        $player = null;
+
+        if (Auth::check()) {
+            $playerModel = new Player();
+            $player = $playerModel->findByUserId(Auth::id());
+
+            if ($useProfile && $player) {
+                $fullName = $player['real_name'] ?? '';
+                $displayName = $player['display_name'] ?? '';
+                $email = $player['email'] ?? Auth::user()['email'];
+                $phone = $player['phone'] ?? '';
+                $ratingCategory = $player['rating_category'] ?? 'beginner';
+            }
+        }
 
         $event = $eventModel->findById($eventId);
 
@@ -224,6 +242,7 @@ class PublicController extends Controller
                 'active_registrations' => $activeRegistrations,
                 'errors' => $errors,
                 'old' => $old,
+                'player' => $player,
             ]);
             return;
         }
@@ -234,8 +253,10 @@ class PublicController extends Controller
         if (Auth::check()) {
             $userId = Auth::id();
 
-            $playerModel = new Player();
-            $player = $playerModel->findByUserId($userId);
+            if (!$player) {
+                $playerModel = new Player();
+                $player = $playerModel->findByUserId($userId);
+            }
 
             if ($player) {
                 $playerId = (int) $player['id'];
@@ -434,6 +455,40 @@ class PublicController extends Controller
         ]);
     }
 
+    public function tournamentArchive(): void
+    {
+        $eventModel = new Event();
+
+        $this->view('public/tournament_archive', [
+            'title' => 'Tournament Archive',
+            'heading' => 'Tournament Archive',
+            'events' => $eventModel->completedPublic(),
+        ]);
+    }
+
+    public function playerProfile(): void
+    {
+        $slug = trim($_GET['slug'] ?? '');
+        $playerModel = new Player();
+        $player = $slug !== '' ? $playerModel->findPublicBySlug($slug) : null;
+
+        if (!$player) {
+            http_response_code(404);
+            $this->view('public/404', [
+                'title' => 'Player Not Found',
+                'heading' => 'Player profile not found',
+            ]);
+            return;
+        }
+
+        $this->view('public/player_profile', [
+            'title' => $player['display_name'] ?: $player['real_name'],
+            'heading' => $player['display_name'] ?: $player['real_name'],
+            'player' => $player,
+            'stats' => $playerModel->publicProfileStats((int) $player['id']),
+        ]);
+    }
+
     public function liveDisplay(): void
     {
         $eventId = (int) ($_GET['event'] ?? 0);
@@ -500,7 +555,18 @@ class PublicController extends Controller
 
         $standings = [];
         $pairings = [];
+        $overallLeaders = [];
+        $overallLeaderboardName = 'Overall leaderboard';
+        $recentResults = [];
+        $roundStats = [
+            'total' => 0,
+            'completed' => 0,
+            'in_play' => 0,
+            'remaining' => 0,
+        ];
         $currentRoundName = 'Not started';
+        $currentRoundStatus = 'pending';
+        $latestRound = null;
 
         if ($tournament) {
             $participantModel = new TournamentParticipant();
@@ -533,6 +599,7 @@ class PublicController extends Controller
 
             if ($latestRound) {
                 $currentRoundName = $latestRound['name'] ?: 'Round ' . $latestRound['round_number'];
+                $currentRoundStatus = $latestRound['status'] ?? 'pending';
             }
 
             $pairings = array_map(function (array $match) use ($matchNames): array {
@@ -548,7 +615,60 @@ class PublicController extends Controller
                     'status' => $this->displayLabel($match['status'] ?? 'scheduled'),
                 ];
             }, $matches);
+
+            foreach ($matches as $match) {
+                $roundStats['total']++;
+
+                if (($match['status'] ?? '') === 'completed') {
+                    $roundStats['completed']++;
+                } elseif (($match['status'] ?? '') === 'running') {
+                    $roundStats['in_play']++;
+                } else {
+                    $roundStats['remaining']++;
+                }
+            }
+
+            $completedMatches = array_values(array_filter(
+                $allMatches,
+                fn (array $match): bool => ($match['status'] ?? '') === 'completed'
+            ));
+            $completedMatches = array_slice(array_reverse($completedMatches), 0, 5);
+            $recentResults = array_map(function (array $match): array {
+                return [
+                    'round' => $match['round_name'] ?: 'Round ' . ($match['round_number'] ?? '-'),
+                    'board' => (int) ($match['board_number'] ?? 0),
+                    'white' => $match['white_display_name'] ?: ($match['white_full_name'] ?? '-'),
+                    'black' => !empty($match['black_registration_id'])
+                        ? ($match['black_display_name'] ?: ($match['black_full_name'] ?? '-'))
+                        : 'Bye',
+                    'result' => $this->displayLabel($match['result'] ?? 'pending'),
+                ];
+            }, $completedMatches);
+
+            $seasonModel = new LeaderboardSeason();
+            $season = $seasonModel->seasonForEvent($eventId);
+
+            if ($season) {
+                $overallLeaderboardName = $season['name'] ?? $overallLeaderboardName;
+                $seasonStandings = array_slice($seasonModel->standings((int) $season['id']), 0, 5);
+                $overallLeaders = array_map(
+                    fn (array $leader, int $index): array => [
+                        'rank' => $index + 1,
+                        'name' => $leader['player_name'] ?? '-',
+                        'points' => (int) ($leader['total_points'] ?? 0),
+                        'events' => (int) ($leader['events_played'] ?? 0),
+                    ],
+                    $seasonStandings,
+                    array_keys($seasonStandings)
+                );
+            }
         }
+
+        $roundNumber = (int) ($tournament['current_round'] ?? 0);
+        $timer = new LiveTimer();
+        $timerState = $latestRound && ($latestRound['status'] ?? '') === 'completed'
+            ? $timer->completeRound($eventId, $roundNumber)
+            : $timer->state($eventId, $roundNumber);
 
         return [
             'event' => [
@@ -558,15 +678,29 @@ class PublicController extends Controller
                 'time' => date('H:i', strtotime($event['start_time'])),
                 'format' => $this->displayLabel($event['format'] ?? ''),
                 'status' => $this->displayLabel($event['event_status'] ?? ''),
+                'description' => trim((string) ($event['description'] ?? '')),
+                'prize' => trim((string) ($event['prize_info'] ?? '')),
+                'poster' => trim((string) ($event['poster_path'] ?? '')),
+                'city' => trim((string) ($event['venue_city'] ?? '')),
+                'players' => (int) ($event['active_registrations'] ?? 0),
+                'capacity' => (int) ($event['max_players'] ?? 0),
             ],
             'tournament' => [
                 'status' => $this->displayLabel($tournament['status'] ?? 'not_created'),
                 'current_round' => (int) ($tournament['current_round'] ?? 0),
                 'total_rounds' => (int) ($tournament['total_rounds'] ?? 0),
                 'round_name' => $currentRoundName,
+                'round_status' => $currentRoundStatus,
             ],
             'standings' => $standings,
             'pairings' => $pairings,
+            'overall_leaderboard' => [
+                'name' => $overallLeaderboardName,
+                'leaders' => $overallLeaders,
+            ],
+            'recent_results' => $recentResults,
+            'round_stats' => $roundStats,
+            'timer' => $timerState,
             'updated_at' => date('H:i:s'),
         ];
     }

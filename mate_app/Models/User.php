@@ -164,4 +164,15 @@ class User extends Model
             $id,
         ]);
     }
+
+    public function markEmailVerified(int $id): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE users
+            SET email_verified_at = COALESCE(email_verified_at, NOW())
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([$id]);
+    }
 }

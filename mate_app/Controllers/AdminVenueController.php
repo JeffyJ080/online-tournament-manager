@@ -6,6 +6,7 @@ require_once __DIR__ . '/../Models/Venue.php';
 require_once __DIR__ . '/../Helpers/slug.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/VenueUpdateRequest.php';
 
 class AdminVenueController extends Controller
 {
@@ -15,11 +16,13 @@ class AdminVenueController extends Controller
 
         $venueModel = new Venue();
         $venues = $venueModel->all();
+        $requestModel = new VenueUpdateRequest();
 
         $this->view('admin/venues/index', [
             'title' => 'Venues',
             'heading' => 'Manage Venues',
             'venues' => $venues,
+            'pendingUpdateRequests' => $requestModel->countPending(),
         ]);
     }
 
@@ -266,6 +269,68 @@ class AdminVenueController extends Controller
         );
 
         header('Location: index.php?page=admin-venues');
+        exit;
+    }
+
+    public function updateRequests(): void
+    {
+        RequireAuth::anyRole(['admin', 'super_admin']);
+
+        $requestModel = new VenueUpdateRequest();
+
+        $this->view('admin/venues/update_requests', [
+            'title' => 'Venue Partner Requests',
+            'heading' => 'Venue Partner Requests',
+            'requests' => $requestModel->pendingForAdmin(),
+        ]);
+    }
+
+    public function approveUpdateRequest(): void
+    {
+        $this->reviewUpdateRequest('approve');
+    }
+
+    public function rejectUpdateRequest(): void
+    {
+        $this->reviewUpdateRequest('reject');
+    }
+
+    private function reviewUpdateRequest(string $action): void
+    {
+        RequireAuth::anyRole(['admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=admin-venue-update-requests');
+            exit;
+        }
+
+        $requestId = (int) ($_POST['id'] ?? 0);
+        $reviewNotes = trim($_POST['review_notes'] ?? '');
+        $requestModel = new VenueUpdateRequest();
+        $request = $requestModel->findById($requestId);
+
+        if (!$request) {
+            http_response_code(404);
+            echo '<h1>404 - Request not found</h1>';
+            return;
+        }
+
+        $ok = $action === 'approve'
+            ? $requestModel->approve($requestId, Auth::id(), $reviewNotes !== '' ? $reviewNotes : null)
+            : $requestModel->reject($requestId, Auth::id(), $reviewNotes !== '' ? $reviewNotes : null);
+
+        if ($ok) {
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                Auth::id(),
+                $action === 'approve' ? 'venue_partner_update_approved' : 'venue_partner_update_rejected',
+                'venue_update_request',
+                $requestId,
+                ucfirst($action) . 'd Venue Partner update request for venue: ' . ($request['venue_name'] ?? $request['venue_id'])
+            );
+        }
+
+        header('Location: index.php?page=admin-venue-update-requests');
         exit;
     }
 }

@@ -4,6 +4,8 @@ $venues = $venues ?? [];
 $seriesList = $seriesList ?? [];
 $errors = $errors ?? [];
 $old = $old ?? [];
+$resultCounts = $resultCounts ?? [];
+$flashSuccess = $flashSuccess ?? null;
 
 function oldLeaderboardValue(array $old, string $key): string
 {
@@ -26,6 +28,10 @@ function selectedLeaderboardValue(array $old, string $key, string $value): strin
 
 <section class="card auth-card">
     <h2>Create season</h2>
+
+    <?php if ($flashSuccess): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($flashSuccess) ?></div>
+    <?php endif; ?>
 
     <?php if (!empty($errors)): ?>
         <div class="alert alert-danger">
@@ -108,6 +114,7 @@ function selectedLeaderboardValue(array $old, string $key, string $value): strin
 
 <section class="card">
     <h2>Existing seasons</h2>
+    <p>Recalculate rebuilds live/computed season rows from completed tournaments. Historical import rows are preserved.</p>
 
     <?php if (empty($seasons)): ?>
         <p>No leaderboard seasons have been created yet.</p>
@@ -121,7 +128,9 @@ function selectedLeaderboardValue(array $old, string $key, string $value): strin
                         <th>Series</th>
                         <th>Dates</th>
                         <th>Status</th>
+                        <th>Rows</th>
                         <th>Public</th>
+                        <th>Recalculate</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -136,8 +145,15 @@ function selectedLeaderboardValue(array $old, string $key, string $value): strin
                                 <?= htmlspecialchars(date('d M Y', strtotime($season['ends_on']))) ?>
                             </td>
                             <td><?= htmlspecialchars(ucwords($season['status'])) ?></td>
+                            <td><?= (int) ($resultCounts[(int) $season['id']] ?? 0) ?></td>
                             <td>
                                 <a href="index.php?page=leaderboard&season=<?= urlencode($season['slug']) ?>">View</a>
+                            </td>
+                            <td>
+                                <form method="POST" action="index.php?page=admin-leaderboards-recalculate">
+                                    <input type="hidden" name="season_id" value="<?= (int) $season['id'] ?>">
+                                    <button class="btn btn-outline btn-small" type="submit">Recalculate</button>
+                                </form>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -7,6 +7,8 @@ require_once __DIR__ . '/../Models/User.php';
 require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Models/PasswordReset.php';
+require_once __DIR__ . '/../Models/EmailVerification.php';
+require_once __DIR__ . '/../Helpers/app_url.php';
 
 class AuthController extends Controller
 {
@@ -281,6 +283,8 @@ class AuthController extends Controller
 
             $db->commit();
 
+            $this->sendVerificationEmail($userId, $email);
+
             $this->view('auth/register_success', [
                 'title' => 'Registration Successful',
                 'heading' => 'Account created successfully',
@@ -373,6 +377,43 @@ class AuthController extends Controller
         exit;
     }
 
+    public function verifyEmail(): void
+    {
+        $token = trim($_GET['token'] ?? '');
+        $verificationModel = new EmailVerification();
+        $verification = $token !== '' ? $verificationModel->findValidByToken($token) : null;
+
+        if (!$verification) {
+            $this->view('auth/email_verification', [
+                'title' => 'Email Verification',
+                'heading' => 'Email verification',
+                'success' => false,
+                'message' => 'This verification link is invalid or has expired.',
+            ]);
+            return;
+        }
+
+        $userModel = new User();
+        $userModel->markEmailVerified((int) $verification['user_id']);
+        $verificationModel->markUsed((int) $verification['id']);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            (int) $verification['user_id'],
+            'email_verified',
+            'user',
+            (int) $verification['user_id'],
+            'User verified their email address.'
+        );
+
+        $this->view('auth/email_verification', [
+            'title' => 'Email Verification',
+            'heading' => 'Email verified',
+            'success' => true,
+            'message' => 'Your email address has been verified.',
+        ]);
+    }
+
     public function logout(): void
     {
         $userId = $_SESSION['user']['id'] ?? null;
@@ -418,8 +459,7 @@ class AuthController extends Controller
         $resetModel = new PasswordReset();
         $resetModel->create($userId, $token, $expiresAt);
 
-        $appConfig = require __DIR__ . '/../../mate_config/app.php';
-        $resetUrl = rtrim($appConfig['app_url'], '/') . '/index.php?page=reset-password&token=' . urlencode($token);
+        $resetUrl = absolute_url('index.php?page=reset-password&token=' . urlencode($token));
 
         $body = '
             <p>A password reset was requested for your Mate Tournaments account.</p>
@@ -439,5 +479,24 @@ class AuthController extends Controller
         );
 
         return $sent;
+    }
+
+    private function sendVerificationEmail(int $userId, string $email): bool
+    {
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = new DateTime('+7 days');
+
+        $verificationModel = new EmailVerification();
+        $verificationModel->create($userId, $token, $expiresAt);
+
+        $verifyUrl = absolute_url('index.php?page=verify-email&token=' . urlencode($token));
+
+        $body = '
+            <p>Welcome to Mate Tournaments.</p>
+            <p><a href="' . htmlspecialchars($verifyUrl) . '">Verify your email address</a></p>
+            <p>This link expires in 7 days.</p>
+        ';
+
+        return Mailer::send($email, 'Verify your Mate Tournaments email', $body);
     }
 }

@@ -45,10 +45,10 @@ class MatchModel extends Model
                 matches.*,
                 rounds.round_number,
                 rounds.name AS round_name,
-                white_registration.display_name AS white_display_name,
-                white_registration.full_name AS white_full_name,
-                black_registration.display_name AS black_display_name,
-                black_registration.full_name AS black_full_name
+                COALESCE(NULLIF(white_player.display_name, ''), NULLIF(white_registration.display_name, '')) AS white_display_name,
+                COALESCE(NULLIF(white_player.real_name, ''), white_registration.full_name) AS white_full_name,
+                COALESCE(NULLIF(black_player.display_name, ''), NULLIF(black_registration.display_name, '')) AS black_display_name,
+                COALESCE(NULLIF(black_player.real_name, ''), black_registration.full_name) AS black_full_name
             FROM matches
             LEFT JOIN rounds
                 ON matches.round_id = rounds.id
@@ -56,6 +56,10 @@ class MatchModel extends Model
                 ON matches.white_registration_id = white_registration.id
             LEFT JOIN event_registrations AS black_registration
                 ON matches.black_registration_id = black_registration.id
+            LEFT JOIN players AS white_player
+                ON white_registration.player_id = white_player.id
+            LEFT JOIN players AS black_player
+                ON black_registration.player_id = black_player.id
             WHERE matches.tournament_id = ?
             ORDER BY rounds.round_number ASC, matches.board_number ASC, matches.id ASC
         ";

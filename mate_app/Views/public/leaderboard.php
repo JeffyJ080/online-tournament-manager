@@ -37,6 +37,11 @@ $recentResults = $recentResults ?? [];
                 </select>
             </div>
         </form>
+        <?php if ($selectedSeason): ?>
+            <a class="btn btn-outline" href="index.php?page=export-leaderboard&season=<?= htmlspecialchars($selectedSeason['slug']) ?>">
+                Export CSV
+            </a>
+        <?php endif; ?>
     </section>
 <?php endif; ?>
 
@@ -44,7 +49,7 @@ $recentResults = $recentResults ?? [];
     <?php if (!$selectedSeason): ?>
         <p>No leaderboard seasons have been created yet.</p>
     <?php elseif (empty($leaders)): ?>
-        <p>No season results have been recorded yet.</p>
+        <p>No season results have been recorded yet. Complete a tournament in this season, or ask an admin to recalculate the season from completed tournaments.</p>
     <?php else: ?>
         <div class="table-wrap">
             <table>

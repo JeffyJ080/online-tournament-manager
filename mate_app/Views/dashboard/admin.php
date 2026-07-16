@@ -54,6 +54,11 @@ $activeVenues = $activeVenues ?? 0;
             <span>Review EFT proof uploads and verify payments.</span>
         </a>
 
+        <a class="shortcut-card" href="index.php?page=finance-stats">
+            <strong>Finance Stats</strong>
+            <span>Review private revenue, outstanding payments, and the R5 player fund.</span>
+        </a>
+
         <a class="shortcut-card" href="index.php?page=admin-venues">
             <strong>Venues</strong>
             <span>Manage restaurants, campuses, and host locations.</span>
@@ -61,7 +66,12 @@ $activeVenues = $activeVenues ?? 0;
 
         <a class="shortcut-card" href="index.php?page=admin-users">
             <strong>Users</strong>
-            <span>Create hosts, event managers, venue managers, admins, and players.</span>
+            <span>Create hosts, event managers, Venue Partners, admins, and players.</span>
+        </a>
+
+        <a class="shortcut-card" href="index.php?page=admin-players">
+            <strong>Player Identity</strong>
+            <span>Link accounts and merge duplicate imported or walk-in player records.</span>
         </a>
 
         <a class="shortcut-card" href="index.php?page=events">
@@ -87,6 +97,11 @@ $activeVenues = $activeVenues ?? 0;
         <a class="shortcut-card" href="index.php?page=admin-leaderboards">
             <strong>Leaderboard Admin</strong>
             <span>Create restaurant seasons and custom placement point rules.</span>
+        </a>
+
+        <a class="shortcut-card" href="index.php?page=admin-audit">
+            <strong>Audit Log</strong>
+            <span>Review recent admin, event, payment, tournament, and rating actions.</span>
         </a>
 
         <a class="shortcut-card" href="index.php?page=host-events">

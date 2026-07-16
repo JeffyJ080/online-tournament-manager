@@ -68,13 +68,13 @@ class Round extends Model
         $sql = "
             UPDATE rounds
             SET status = 'running',
-                started_at = COALESCE(started_at, NOW())
+                started_at = COALESCE(started_at, ?)
             WHERE id = ?
         ";
 
         $stmt = $this->db->prepare($sql);
 
-        return $stmt->execute([$roundId]);
+        return $stmt->execute([$this->currentTimestamp(), $roundId]);
     }
 
     public function markCompleted(int $roundId): bool
@@ -82,13 +82,13 @@ class Round extends Model
         $sql = "
             UPDATE rounds
             SET status = 'completed',
-                completed_at = NOW()
+                completed_at = ?
             WHERE id = ?
         ";
 
         $stmt = $this->db->prepare($sql);
 
-        return $stmt->execute([$roundId]);
+        return $stmt->execute([$this->currentTimestamp(), $roundId]);
     }
 
     public function latestForTournament(int $tournamentId): ?array

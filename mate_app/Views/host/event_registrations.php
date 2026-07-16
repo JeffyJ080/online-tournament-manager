@@ -2,6 +2,7 @@
 $heading = $heading ?? 'Event Registrations';
 $event = $event ?? [];
 $registrations = $registrations ?? [];
+$playerSuggestions = $playerSuggestions ?? [];
 $errors = $errors ?? [];
 $walkInOld = $walkInOld ?? [];
 $eventClosed = in_array(($event['event_status'] ?? ''), ['completed', 'cancelled'], true);
@@ -69,6 +70,7 @@ function hostRegLabel(?string $value): string
                     type="text"
                     id="full_name"
                     name="full_name"
+                    list="known_players"
                     value="<?= walkOld($walkInOld, 'full_name') ?>"
                     required
                 >
@@ -92,6 +94,7 @@ function hostRegLabel(?string $value): string
                     type="email"
                     id="email"
                     name="email"
+                    list="known_player_emails"
                     value="<?= walkOld($walkInOld, 'email') ?>"
                 >
             </div>
@@ -143,6 +146,22 @@ function hostRegLabel(?string $value): string
             <button class="btn" type="submit">Add Walk-in</button>
         </div>
     </form>
+
+    <datalist id="known_players">
+        <?php foreach ($playerSuggestions as $suggestion): ?>
+            <option value="<?= htmlspecialchars($suggestion['display_name'] ?: $suggestion['full_name']) ?>">
+                <?= htmlspecialchars($suggestion['email']) ?>
+            </option>
+        <?php endforeach; ?>
+    </datalist>
+
+    <datalist id="known_player_emails">
+        <?php foreach ($playerSuggestions as $suggestion): ?>
+            <option value="<?= htmlspecialchars($suggestion['email']) ?>">
+                <?= htmlspecialchars($suggestion['display_name'] ?: $suggestion['full_name']) ?>
+            </option>
+        <?php endforeach; ?>
+    </datalist>
 </section>
 
 <br/>
@@ -163,6 +182,14 @@ function hostRegLabel(?string $value): string
 
         <a class="btn btn-outline" href="index.php?page=live-display&event=<?= (int) ($event['id'] ?? 0) ?>" target="_blank">
             Second Screen
+        </a>
+
+        <a class="btn btn-outline" href="index.php?page=export-event-registrations&id=<?= (int) ($event['id'] ?? 0) ?>">
+            Export Players
+        </a>
+
+        <a class="btn btn-outline" href="index.php?page=export-tournament-results&id=<?= (int) ($event['id'] ?? 0) ?>">
+            Export Results
         </a>
 
         <a class="btn" href="index.php?page=host-event-report&id=<?= (int) ($event['id'] ?? 0) ?>">
@@ -230,20 +257,35 @@ function hostRegLabel(?string $value): string
                             </td>
 
                             <td>
-                                <?php if (!$eventClosed && ($registration['registration_status'] ?? '') !== 'checked_in'): ?>
-                                    <form method="POST" action="index.php?page=host-check-in">
-                                        <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
-                                        <input type="hidden" name="event_id" value="<?= (int) $event['id'] ?>">
+                                <div class="table-actions">
+                                    <?php if (!$eventClosed && ($registration['registration_status'] ?? '') !== 'checked_in'): ?>
+                                        <form method="POST" action="index.php?page=host-check-in">
+                                            <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
+                                            <input type="hidden" name="event_id" value="<?= (int) $event['id'] ?>">
 
-                                        <button class="btn btn-sm" type="submit">
-                                            Check In
-                                        </button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="status-pill status-approved">
-                                        Checked In
-                                    </span>
-                                <?php endif; ?>
+                                            <button class="btn btn-sm" type="submit">
+                                                Check In
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="status-pill status-approved">
+                                            Checked In
+                                        </span>
+                                    <?php endif; ?>
+
+                                    <?php if (empty($registration['user_id']) && !str_ends_with($registration['email'] ?? '', '@walkin.local')): ?>
+                                        <form method="POST" action="index.php?page=host-walk-in-invite">
+                                            <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
+                                            <button class="btn btn-outline btn-sm" type="submit">Invite</button>
+                                        </form>
+
+                                        <form method="POST" action="index.php?page=host-walk-in-link" class="inline-form">
+                                            <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
+                                            <input type="email" name="account_email" placeholder="Account email" value="<?= htmlspecialchars($registration['email'] ?? '') ?>">
+                                            <button class="btn btn-outline btn-sm" type="submit">Link</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -146,6 +146,86 @@ class EventRegistration extends Model
         return $stmt->fetchAll();
     }
 
+    public function unlinkedForEmail(string $email): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                event_registrations.*,
+                events.title AS event_title,
+                events.event_date,
+                venues.name AS venue_name
+            FROM event_registrations
+            INNER JOIN events ON event_registrations.event_id = events.id
+            INNER JOIN venues ON events.venue_id = venues.id
+            WHERE LOWER(event_registrations.email) = LOWER(?)
+              AND event_registrations.user_id IS NULL
+            ORDER BY events.event_date DESC
+        ");
+
+        $stmt->execute([$email]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function linkToPlayer(int $registrationId, int $userId, int $playerId): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE event_registrations
+            SET user_id = ?,
+                player_id = ?
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([$userId, $playerId, $registrationId]);
+    }
+
+    public function claimMatchingEmail(string $email, int $userId, int $playerId): int
+    {
+        $stmt = $this->db->prepare("
+            UPDATE event_registrations
+            SET user_id = ?,
+                player_id = ?
+            WHERE LOWER(email) = LOWER(?)
+              AND user_id IS NULL
+        ");
+
+        $stmt->execute([$userId, $playerId, $email]);
+
+        return $stmt->rowCount();
+    }
+
+    public function matchHistoryForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                matches.*,
+                events.title AS event_title,
+                events.event_date,
+                white_registration.full_name AS white_name,
+                white_registration.display_name AS white_display_name,
+                black_registration.full_name AS black_name,
+                black_registration.display_name AS black_display_name,
+                own_registration.id AS own_registration_id
+            FROM event_registrations AS own_registration
+            INNER JOIN matches
+                ON matches.white_registration_id = own_registration.id
+                OR matches.black_registration_id = own_registration.id
+            INNER JOIN tournaments ON matches.tournament_id = tournaments.id
+            INNER JOIN events ON tournaments.event_id = events.id
+            LEFT JOIN event_registrations AS white_registration
+                ON matches.white_registration_id = white_registration.id
+            LEFT JOIN event_registrations AS black_registration
+                ON matches.black_registration_id = black_registration.id
+            WHERE own_registration.user_id = ?
+              AND matches.status = 'completed'
+            ORDER BY events.event_date DESC, matches.id DESC
+        ");
+
+        $stmt->execute([$userId]);
+
+        return $stmt->fetchAll();
+    }
+
     public function allWithEventDetails(): array
     {
         $sql = "
@@ -162,6 +242,31 @@ class EventRegistration extends Model
         ";
 
         $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function recentPlayerContacts(int $limit = 250): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                MAX(full_name) AS full_name,
+                MAX(display_name) AS display_name,
+                email,
+                MAX(phone) AS phone,
+                MAX(rating_category) AS rating_category,
+                MAX(registered_at) AS last_registered_at
+            FROM event_registrations
+            WHERE email IS NOT NULL
+              AND email <> ''
+              AND email NOT LIKE '%@walkin.local'
+            GROUP BY email
+            ORDER BY last_registered_at DESC
+            LIMIT ?
+        ");
+
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -308,6 +413,21 @@ class EventRegistration extends Model
         $stmt = $this->db->prepare($sql);
 
         return $stmt->execute([$registrationId]);
+    }
+
+    public function checkInForEvent(int $registrationId, int $eventId): bool
+    {
+        $sql = "
+            UPDATE event_registrations
+            SET registration_status = 'checked_in'
+            WHERE id = ?
+              AND event_id = ?
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$registrationId, $eventId]);
+
+        return $stmt->rowCount() > 0;
     }
 
     public function countMatchesForUser(int $userId): int

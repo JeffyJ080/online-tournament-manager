@@ -10,8 +10,10 @@ require_once __DIR__ . '/../Models/Tournament.php';
 require_once __DIR__ . '/../Models/AuditLog.php';
 require_once __DIR__ . '/../Models/TournamentParticipant.php';
 require_once __DIR__ . '/../Models/LeaderboardSeason.php';
+require_once __DIR__ . '/../Models/Player.php';
 require_once __DIR__ . '/../Models/Round.php';
 require_once __DIR__ . '/../Models/Match.php';
+require_once __DIR__ . '/../Helpers/LiveTimer.php';
 
 class TournamentManagerController extends Controller
 {
@@ -60,6 +62,7 @@ class TournamentManagerController extends Controller
         if ($tournament) {
             $participantModel = new TournamentParticipant();
             $participants = $participantModel->forTournament((int) $tournament['id']);
+            $lateEntries = $participantModel->missingCheckedInRegistrations((int) $tournament['id'], $eventId);
         }
 
         $rounds = [];
@@ -90,8 +93,120 @@ class TournamentManagerController extends Controller
             'standings' => $standings,
             'latestRound' => $latestRound,
             'participants' => $participants,
+            'lateEntries' => $lateEntries ?? [],
             'checkedInPlayers' => $checkedInPlayers,
         ]);
+    }
+
+    public function timerControl(): void
+    {
+        RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
+
+        $eventId = (int) ($_GET['event'] ?? $_GET['id'] ?? 0);
+
+        if ($eventId <= 0) {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $hostModel = new EventHost();
+
+        if (
+            !Auth::hasAnyRole(['admin', 'super_admin']) &&
+            !$hostModel->isAssigned($eventId, Auth::id())
+        ) {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
+        $eventModel = new Event();
+        $event = $eventModel->findById($eventId);
+
+        if (!$event) {
+            http_response_code(404);
+            echo '<h1>404 - Event not found</h1>';
+            return;
+        }
+
+        $tournamentModel = new Tournament();
+        $tournament = $tournamentModel->findByEventId($eventId);
+        $latestRound = null;
+
+        if ($tournament) {
+            $roundModel = new Round();
+            $latestRound = $roundModel->latestForTournament((int) $tournament['id']);
+        }
+
+        $roundNumber = (int) ($tournament['current_round'] ?? 0);
+        $timer = new LiveTimer();
+        $timerState = $latestRound && ($latestRound['status'] ?? '') === 'completed'
+            ? $timer->completeRound($eventId, $roundNumber)
+            : $timer->state($eventId, $roundNumber);
+
+        $this->view('tournament/timer_control', [
+            'title' => 'Live Timer Remote',
+            'heading' => 'Live Timer Remote',
+            'event' => $event,
+            'tournament' => $tournament,
+            'latestRound' => $latestRound,
+            'timerState' => $timerState,
+        ]);
+    }
+
+    public function updateTimerControl(): void
+    {
+        RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        $action = trim((string) ($_POST['timer_action'] ?? ''));
+
+        if ($eventId <= 0) {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $hostModel = new EventHost();
+
+        if (
+            !Auth::hasAnyRole(['admin', 'super_admin']) &&
+            !$hostModel->isAssigned($eventId, Auth::id())
+        ) {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
+        $tournamentModel = new Tournament();
+        $tournament = $tournamentModel->findByEventId($eventId);
+        $roundNumber = (int) ($tournament['current_round'] ?? 0);
+        $latestRound = null;
+
+        if ($tournament) {
+            $roundModel = new Round();
+            $latestRound = $roundModel->latestForTournament((int) $tournament['id']);
+        }
+
+        $timer = new LiveTimer();
+
+        if ($action === 'set_duration') {
+            $minutes = max(1, min(240, (int) ($_POST['duration_minutes'] ?? 20)));
+            $timer->setDuration($eventId, $roundNumber, $minutes * 60);
+        } elseif ($action === 'start' && $roundNumber > 0 && ($latestRound['status'] ?? '') !== 'completed') {
+            $timer->start($eventId, $roundNumber);
+        } elseif ($action === 'pause') {
+            $timer->pause($eventId, $roundNumber);
+        } elseif ($action === 'reset') {
+            $timer->reset($eventId, $roundNumber);
+        }
+
+        header('Location: index.php?page=timer-control&event=' . $eventId);
+        exit;
     }
 
     public function create(): void
@@ -224,6 +339,65 @@ class TournamentManagerController extends Controller
             (int) $tournament['id'],
             'Imported ' . $importedCount . ' checked-in participants.'
         );
+
+        header('Location: index.php?page=tournament-manager&id=' . $eventId);
+        exit;
+    }
+
+    public function addLateEntries(): void
+    {
+        RequireAuth::anyRole(['host', 'event_manager', 'admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+
+        if ($eventId <= 0) {
+            header('Location: index.php?page=host-events');
+            exit;
+        }
+
+        $hostModel = new EventHost();
+
+        if (
+            !Auth::hasAnyRole(['admin', 'super_admin']) &&
+            !$hostModel->isAssigned($eventId, Auth::id())
+        ) {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
+        $tournamentModel = new Tournament();
+        $tournament = $tournamentModel->findByEventId($eventId);
+
+        if (!$tournament || $this->eventOrTournamentIsClosedForOperations($eventId, $tournament)) {
+            header('Location: index.php?page=tournament-manager&id=' . $eventId);
+            exit;
+        }
+
+        if (!in_array(($tournament['format'] ?? ''), ['swiss', 'weekly_points'], true)) {
+            header('Location: index.php?page=tournament-manager&id=' . $eventId);
+            exit;
+        }
+
+        $participantModel = new TournamentParticipant();
+        $lateEntries = $participantModel->missingCheckedInRegistrations((int) $tournament['id'], $eventId);
+        $importedCount = $participantModel->importFromRegistrations((int) $tournament['id'], $lateEntries);
+
+        if ($importedCount > 0) {
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                Auth::id(),
+                'tournament_late_entries_added',
+                'tournament',
+                (int) $tournament['id'],
+                'Added ' . $importedCount . ' late checked-in participant(s).'
+            );
+        }
 
         header('Location: index.php?page=tournament-manager&id=' . $eventId);
         exit;
@@ -511,6 +685,94 @@ class TournamentManagerController extends Controller
                 'tournament',
                 (int) $tournament['id'],
                 'Submitted ' . $updatedCount . ' round results.'
+            );
+        }
+
+        header('Location: index.php?page=tournament-manager&id=' . $eventId);
+        exit;
+    }
+
+    public function adminCorrectRoundResults(): void
+    {
+        RequireAuth::role('super_admin');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=admin-events');
+            exit;
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        $results = $_POST['results'] ?? [];
+
+        if ($eventId <= 0 || !is_array($results)) {
+            header('Location: index.php?page=tournament-manager&id=' . $eventId);
+            exit;
+        }
+
+        $tournamentModel = new Tournament();
+        $tournament = $tournamentModel->findByEventId($eventId);
+
+        if (!$tournament) {
+            header('Location: index.php?page=tournament-manager&id=' . $eventId);
+            exit;
+        }
+
+        $matchModel = new MatchModel();
+        $updatedRoundIds = [];
+        $updatedCount = 0;
+        $validResults = ($tournament['format'] ?? '') === 'knockout'
+            ? ['white_win', 'black_win']
+            : ['white_win', 'black_win', 'draw', 'forfeit'];
+
+        foreach ($results as $matchId => $result) {
+            $matchId = (int) $matchId;
+            $result = trim((string) $result);
+
+            if ($matchId <= 0 || !in_array($result, $validResults, true)) {
+                continue;
+            }
+
+            $match = $matchModel->findById($matchId);
+
+            if (
+                !$match ||
+                (int) $match['tournament_id'] !== (int) $tournament['id'] ||
+                empty($match['black_registration_id']) ||
+                ($match['result'] ?? '') === $result
+            ) {
+                continue;
+            }
+
+            $matchModel->updateResult($matchId, $result, Auth::id());
+            $updatedRoundIds[(int) $match['round_id']] = (int) $match['round_id'];
+            $updatedCount++;
+        }
+
+        if ($updatedCount > 0) {
+            $participantModel = new TournamentParticipant();
+            $participantModel->recalculateScores(
+                (int) $tournament['id'],
+                $matchModel->completedForTournament((int) $tournament['id'])
+            );
+
+            $roundModel = new Round();
+
+            foreach ($updatedRoundIds as $roundId) {
+                if ($roundId > 0 && $matchModel->roundIsComplete($roundId)) {
+                    $roundModel->markCompleted($roundId);
+                }
+            }
+
+            $seasonModel = new LeaderboardSeason();
+            $seasonModel->recordTournamentResults((int) $tournament['id']);
+
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                Auth::id(),
+                'admin_tournament_results_corrected',
+                'tournament',
+                (int) $tournament['id'],
+                'Admin corrected ' . $updatedCount . ' completed tournament result(s).'
             );
         }
 
@@ -863,6 +1125,20 @@ class TournamentManagerController extends Controller
 
         $seasonModel = new LeaderboardSeason();
         $seasonModel->recordTournamentResults($tournamentId);
+
+        $playerModel = new Player();
+        $ratingUpdates = $playerModel->applyTournamentRatings($tournamentId);
+
+        if ($ratingUpdates > 0) {
+            $auditLog = new AuditLog();
+            $auditLog->create(
+                Auth::id(),
+                'ratings_updated',
+                'tournament',
+                $tournamentId,
+                'Applied ' . $ratingUpdates . ' player rating adjustments.'
+            );
+        }
     }
 
     private function eventOrTournamentIsClosedForOperations(int $eventId, array $tournament): bool

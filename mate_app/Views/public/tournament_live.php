@@ -69,6 +69,9 @@ function livePlayerName(array $row, string $side): string
                             <th>Rank</th>
                             <th>Player</th>
                             <th>Score</th>
+                            <th>Buchholz</th>
+                            <th>SB</th>
+                            <th>H2H</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -78,6 +81,9 @@ function livePlayerName(array $row, string $side): string
                                 <td><?= $rank + 1 ?></td>
                                 <td><?= htmlspecialchars($standing['display_name'] ?: $standing['full_name']) ?></td>
                                 <td><?= htmlspecialchars((string) ($standing['current_score'] ?? '0.0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['buchholz'] ?? '0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['sonneborn_berger'] ?? '0')) ?></td>
+                                <td><?= htmlspecialchars((string) ($standing['head_to_head'] ?? '0')) ?></td>
                                 <td><?= htmlspecialchars(liveLabel($standing['status'] ?? '-')) ?></td>
                             </tr>
                         <?php endforeach; ?>

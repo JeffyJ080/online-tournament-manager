@@ -1,6 +1,7 @@
 <?php
 $heading = $heading ?? 'Manage Venues';
 $venues = $venues ?? [];
+$pendingUpdateRequests = $pendingUpdateRequests ?? 0;
 ?>
 
 <section class="dashboard-header">
@@ -20,7 +21,12 @@ $venues = $venues ?? [];
             <p>These venues are stored in the database.</p>
         </div>
 
-        <a class="btn" href="index.php?page=admin-venues-create">Add Venue</a>
+        <div class="hero-actions">
+            <a class="btn btn-outline" href="index.php?page=admin-venue-update-requests">
+                Venue Partner Requests<?= $pendingUpdateRequests > 0 ? ' (' . (int) $pendingUpdateRequests . ')' : '' ?>
+            </a>
+            <a class="btn" href="index.php?page=admin-venues-create">Add Venue</a>
+        </div>
     </div>
 
     <?php if (empty($venues)): ?>

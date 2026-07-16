@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Core/Database.php';
 require_once __DIR__ . '/../Helpers/Auth.php';
+require_once __DIR__ . '/../Middleware/RequireAuth.php';
 require_once __DIR__ . '/../Models/EventRegistration.php';
 require_once __DIR__ . '/../Models/Payment.php';
 require_once __DIR__ . '/../Models/PaymentProof.php';
@@ -12,6 +13,8 @@ class PaymentProofController extends Controller
 {
     public function create(): void
     {
+        RequireAuth::check();
+
         $registrationId = (int) ($_GET['registration'] ?? 0);
 
         if ($registrationId <= 0) {
@@ -32,7 +35,7 @@ class PaymentProofController extends Controller
             return;
         }
 
-        if (Auth::check() && (int) ($registration['user_id'] ?? 0) !== Auth::id()) {
+        if (!$this->canUploadForRegistration($registration)) {
             http_response_code(403);
             echo '<h1>403 - Access denied</h1>';
             return;
@@ -58,6 +61,8 @@ class PaymentProofController extends Controller
 
     public function store(): void
     {
+        RequireAuth::check();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: index.php?page=events');
             exit;
@@ -74,7 +79,7 @@ class PaymentProofController extends Controller
             $errors[] = 'Registration or payment record not found.';
         }
 
-        if ($registration && Auth::check() && (int) ($registration['user_id'] ?? 0) !== Auth::id()) {
+        if ($registration && !$this->canUploadForRegistration($registration)) {
             $errors[] = 'You do not have permission to upload proof for this registration.';
         }
 
@@ -216,5 +221,14 @@ class PaymentProofController extends Controller
             'heading' => 'Proof uploaded successfully',
             'registration' => $registration,
         ]);
+    }
+
+    private function canUploadForRegistration(array $registration): bool
+    {
+        if (Auth::hasAnyRole(['admin', 'super_admin'])) {
+            return true;
+        }
+
+        return (int) ($registration['user_id'] ?? 0) === (int) Auth::id();
     }
 }

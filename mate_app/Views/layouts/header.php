@@ -16,17 +16,21 @@ $pageTitle = $title ?? $appConfig['app_name'];
 
 <header>
     <nav>
-        <a href="index.php?page=home">Mate Tournaments</a>
+        <a class="brand-link" href="index.php?page=home">Mate Tournaments</a>
 
-        <ul>
+        <ul class="desktop-nav">
             <li><a href="<?= url('home') ?>">Home</a></li>
             <li><a href="<?= url('events') ?>">Events</a></li>
             <li><a href="<?= url('venues') ?>">Venues</a></li>
             <li><a href="<?= url('leaderboard') ?>">Leaderboard</a></li>
+            <li><a href="index.php?page=tournament-archive">Archive</a></li>
             <li><a href="<?= url('about') ?>">About</a></li>
             <li><a href="<?= url('contact') ?>">Contact</a></li>
             <?php if (Auth::check()): ?>
                 <li><a href="<?= url('dashboard') ?>">Dashboard</a></li>
+                <?php if (Auth::hasAnyRole(['admin', 'super_admin'])): ?>
+                    <li><a href="<?= url('admin-players') ?>">Players</a></li>
+                <?php endif; ?>
                 <li><a href="<?= url('my-profile') ?>">Profile</a></li>
                 <li><a href="<?= url('logout') ?>">Logout</a></li>
             <?php else: ?>
@@ -34,6 +38,31 @@ $pageTitle = $title ?? $appConfig['app_name'];
                 <li><a href="<?= url('register') ?>">Register</a></li>
             <?php endif; ?>
         </ul>
+
+        <details class="mobile-nav">
+            <summary>Menu</summary>
+
+            <ul>
+                <li><a href="<?= url('home') ?>">Home</a></li>
+                <li><a href="<?= url('events') ?>">Events</a></li>
+                <li><a href="<?= url('venues') ?>">Venues</a></li>
+                <li><a href="<?= url('leaderboard') ?>">Leaderboard</a></li>
+                <li><a href="index.php?page=tournament-archive">Archive</a></li>
+                <li><a href="<?= url('about') ?>">About</a></li>
+                <li><a href="<?= url('contact') ?>">Contact</a></li>
+                <?php if (Auth::check()): ?>
+                    <li><a href="<?= url('dashboard') ?>">Dashboard</a></li>
+                    <?php if (Auth::hasAnyRole(['admin', 'super_admin'])): ?>
+                        <li><a href="<?= url('admin-players') ?>">Players</a></li>
+                    <?php endif; ?>
+                    <li><a href="<?= url('my-profile') ?>">Profile</a></li>
+                    <li><a href="<?= url('logout') ?>">Logout</a></li>
+                <?php else: ?>
+                    <li><a href="<?= url('login') ?>">Login</a></li>
+                    <li><a href="<?= url('register') ?>">Register</a></li>
+                <?php endif; ?>
+            </ul>
+        </details>
     </nav>
 </header>
 

@@ -1,6 +1,8 @@
 <?php
 $heading = $heading ?? 'Manage Events';
 $events = $events ?? [];
+$seriesList = $seriesList ?? [];
+$generationMessage = $generationMessage ?? null;
 
 function adminEventDate(?string $date): string
 {
@@ -32,6 +34,50 @@ function adminEventLabel(?string $value): string
         </p>
     </div>
 </section>
+
+<section class="card">
+    <div class="section-header">
+        <div>
+            <h2>Generate Recurring Events</h2>
+            <p>Create missing dates from an active weekly or monthly event series.</p>
+        </div>
+    </div>
+
+    <?php if ($generationMessage): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($generationMessage) ?></div>
+    <?php endif; ?>
+
+    <?php if (empty($seriesList)): ?>
+        <p>No active event series found.</p>
+    <?php else: ?>
+        <form method="POST" action="index.php?page=admin-events-generate-recurring" class="inline-form recurring-form">
+            <label>
+                Series
+                <select name="series_id" required>
+                    <?php foreach ($seriesList as $series): ?>
+                        <option value="<?= (int) $series['id'] ?>">
+                            <?= htmlspecialchars($series['title']) ?> - <?= htmlspecialchars($series['venue_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+
+            <label>
+                From
+                <input type="date" name="starts_on" value="<?= htmlspecialchars(date('Y-m-d')) ?>" required>
+            </label>
+
+            <label>
+                To
+                <input type="date" name="ends_on" value="<?= htmlspecialchars(date('Y-m-d', strtotime('+8 weeks'))) ?>" required>
+            </label>
+
+            <button class="btn" type="submit">Generate Dates</button>
+        </form>
+    <?php endif; ?>
+</section>
+
+<br>
 
 <section class="card">
     <div class="section-header">

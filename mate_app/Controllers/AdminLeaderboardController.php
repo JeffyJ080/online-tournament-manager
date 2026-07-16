@@ -18,15 +18,21 @@ class AdminLeaderboardController extends Controller
         $seasonModel = new LeaderboardSeason();
         $venueModel = new Venue();
         $seriesModel = new EventSeries();
+        $seasons = $seasonModel->all();
+        $resultCounts = $this->resultCounts($seasonModel, $seasons);
+        $flashSuccess = $_SESSION['flash_success'] ?? null;
+        unset($_SESSION['flash_success']);
 
         $this->view('admin/leaderboards/index', [
             'title' => 'Leaderboard Seasons',
             'heading' => 'Leaderboard Seasons',
-            'seasons' => $seasonModel->all(),
+            'seasons' => $seasons,
             'venues' => $venueModel->active(),
             'seriesList' => $seriesModel->active(),
             'errors' => [],
             'old' => $this->defaultOldValues(),
+            'resultCounts' => $resultCounts,
+            'flashSuccess' => $flashSuccess,
         ]);
     }
 
@@ -95,15 +101,18 @@ class AdminLeaderboardController extends Controller
             $seasonModel = new LeaderboardSeason();
             $venueModel = new Venue();
             $seriesModel = new EventSeries();
+            $seasons = $seasonModel->all();
 
             $this->view('admin/leaderboards/index', [
                 'title' => 'Leaderboard Seasons',
                 'heading' => 'Leaderboard Seasons',
-                'seasons' => $seasonModel->all(),
+                'seasons' => $seasons,
                 'venues' => $venueModel->active(),
                 'seriesList' => $seriesModel->active(),
                 'errors' => $errors,
                 'old' => $old,
+                'resultCounts' => $this->resultCounts($seasonModel, $seasons),
+                'flashSuccess' => null,
             ]);
             return;
         }
@@ -130,6 +139,41 @@ class AdminLeaderboardController extends Controller
             $seasonId,
             'Created leaderboard season: ' . $old['name']
         );
+
+        header('Location: index.php?page=admin-leaderboards');
+        exit;
+    }
+
+    public function recalculate(): void
+    {
+        RequireAuth::anyRole(['admin', 'super_admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=admin-leaderboards');
+            exit;
+        }
+
+        $seasonId = (int) ($_POST['season_id'] ?? 0);
+        $seasonModel = new LeaderboardSeason();
+        $season = $seasonModel->findById($seasonId);
+
+        if (!$season) {
+            header('Location: index.php?page=admin-leaderboards');
+            exit;
+        }
+
+        $recorded = $seasonModel->recalculateSeason($seasonId);
+
+        $auditLog = new AuditLog();
+        $auditLog->create(
+            Auth::id(),
+            'leaderboard_season_recalculated',
+            'leaderboard_season',
+            $seasonId,
+            'Recalculated leaderboard season: ' . $season['name'] . ' (' . $recorded . ' tournaments)'
+        );
+
+        $_SESSION['flash_success'] = 'Leaderboard recalculated from ' . $recorded . ' completed tournament(s).';
 
         header('Location: index.php?page=admin-leaderboards');
         exit;
@@ -174,6 +218,17 @@ class AdminLeaderboardController extends Controller
         $parsed = DateTime::createFromFormat('Y-m-d', $date);
 
         return $parsed instanceof DateTime && $parsed->format('Y-m-d') === $date;
+    }
+
+    private function resultCounts(LeaderboardSeason $seasonModel, array $seasons): array
+    {
+        $counts = [];
+
+        foreach ($seasons as $season) {
+            $counts[(int) $season['id']] = $seasonModel->resultCountForSeason((int) $season['id']);
+        }
+
+        return $counts;
     }
 
     private function defaultOldValues(): array

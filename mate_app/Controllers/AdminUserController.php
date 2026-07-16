@@ -19,7 +19,7 @@ class AdminUserController extends Controller
             'title' => 'Users',
             'heading' => 'Manage Users',
             'users' => $userModel->allWithRoles(),
-            'roles' => $userModel->roles(),
+            'roles' => $this->assignableRoles($userModel),
             'errors' => [],
             'old' => [],
         ]);
@@ -42,7 +42,8 @@ class AdminUserController extends Controller
         $phone = trim($_POST['phone'] ?? '');
 
         $errors = [];
-        $validRoles = ['player', 'host', 'event_manager', 'venue_manager', 'admin', 'super_admin'];
+        $userModel = new User();
+        $validRoles = $this->assignableRoleNames($userModel);
 
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'A valid email address is required.';
@@ -59,8 +60,6 @@ class AdminUserController extends Controller
         if ($role === 'player' && $realName === '') {
             $errors[] = 'Player accounts require a real name.';
         }
-
-        $userModel = new User();
 
         if ($email !== '' && $userModel->findByEmail($email)) {
             $errors[] = 'A user with this email already exists.';
@@ -79,7 +78,7 @@ class AdminUserController extends Controller
                 'title' => 'Users',
                 'heading' => 'Manage Users',
                 'users' => $userModel->allWithRoles(),
-                'roles' => $userModel->roles(),
+                'roles' => $this->assignableRoles($userModel),
                 'errors' => $errors,
                 'old' => $old,
             ]);
@@ -126,12 +125,26 @@ class AdminUserController extends Controller
         $role = trim($_POST['role'] ?? '');
         $status = trim($_POST['status'] ?? '');
 
-        if ($id <= 0 || !in_array($role, ['player', 'host', 'event_manager', 'venue_manager', 'admin', 'super_admin'], true) || !in_array($status, ['active', 'inactive', 'banned'], true)) {
+        $userModel = new User();
+        $targetUser = $id > 0 ? $userModel->findById($id) : null;
+        $validRoles = $this->assignableRoleNames($userModel);
+
+        if (
+            $id <= 0 ||
+            !$targetUser ||
+            !in_array($role, $validRoles, true) ||
+            !in_array($status, ['active', 'inactive', 'banned'], true)
+        ) {
             header('Location: index.php?page=admin-users');
             exit;
         }
 
-        $userModel = new User();
+        if (!Auth::is('super_admin') && ($targetUser['role_name'] ?? '') === 'super_admin') {
+            http_response_code(403);
+            echo '<h1>403 - Access denied</h1>';
+            return;
+        }
+
         $userModel->updateRoleAndStatus($id, $role, $status);
 
         $auditLog = new AuditLog();
@@ -145,5 +158,24 @@ class AdminUserController extends Controller
 
         header('Location: index.php?page=admin-users');
         exit;
+    }
+
+    private function assignableRoles(User $userModel): array
+    {
+        $allowed = $this->assignableRoleNames($userModel);
+
+        return array_values(array_filter(
+            $userModel->roles(),
+            fn ($role) => in_array($role['name'] ?? '', $allowed, true)
+        ));
+    }
+
+    private function assignableRoleNames(User $userModel): array
+    {
+        if (Auth::is('super_admin')) {
+            return ['player', 'host', 'event_manager', 'venue_manager', 'admin', 'super_admin'];
+        }
+
+        return ['player', 'host', 'event_manager', 'venue_manager'];
     }
 }

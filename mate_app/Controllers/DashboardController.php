@@ -9,6 +9,7 @@ require_once __DIR__ . '/../Models/Event.php';
 require_once __DIR__ . '/../Models/PaymentProof.php';
 require_once __DIR__ . '/../Models/Venue.php';
 require_once __DIR__ . '/../Models/EventHost.php';
+require_once __DIR__ . '/../Models/VenueUpdateRequest.php';
 
 class DashboardController extends Controller
 {
@@ -25,6 +26,11 @@ class DashboardController extends Controller
 
         if ($role === 'host') {
             $this->host();
+            return;
+        }
+
+        if ($role === 'event_manager') {
+            $this->eventManager();
             return;
         }
 
@@ -67,6 +73,24 @@ class DashboardController extends Controller
         $this->view('dashboard/host', [
             'title' => 'Host Dashboard',
             'heading' => 'Host Dashboard',
+            'roleLabel' => 'Host',
+            'toolsHeading' => 'Host tools',
+            'user' => Auth::user(),
+            'assignedEvents' => $hostModel->countAssignedEvents(Auth::id()),
+            'checkedInPlayers' => $hostModel->countCheckedInPlayers(Auth::id()),
+            'cashToHandOver' => $hostModel->cashToHandOver(Auth::id()),
+        ]);
+    }
+
+    public function eventManager(): void
+    {
+        $hostModel = new EventHost();
+
+        $this->view('dashboard/host', [
+            'title' => 'Event Manager Dashboard',
+            'heading' => 'Event Manager Dashboard',
+            'roleLabel' => 'Event Manager',
+            'toolsHeading' => 'Event Manager tools',
             'user' => Auth::user(),
             'assignedEvents' => $hostModel->countAssignedEvents(Auth::id()),
             'checkedInPlayers' => $hostModel->countCheckedInPlayers(Auth::id()),
@@ -77,11 +101,15 @@ class DashboardController extends Controller
     public function venueManager(): void
     {
         $venueModel = new Venue();
+        $requestModel = new VenueUpdateRequest();
 
         $this->view('dashboard/venue_manager', [
             'title' => 'Venue Dashboard',
-            'heading' => 'Venue Manager Dashboard',
+            'heading' => 'Venue Partner Dashboard',
             'user' => Auth::user(),
+            'venues' => $venueModel->forManager(Auth::id()),
+            'events' => $venueModel->eventSummariesForManager(Auth::id()),
+            'requestHistory' => $requestModel->allForRequester(Auth::id()),
             'upcomingEvents' => $venueModel->countUpcomingForManager(Auth::id()),
             'totalEventsHosted' => $venueModel->countHostedForManager(Auth::id()),
             'averageAttendance' => $venueModel->averageAttendanceForManager(Auth::id()),

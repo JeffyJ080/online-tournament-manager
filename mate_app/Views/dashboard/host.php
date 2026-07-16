@@ -1,6 +1,8 @@
 <?php
 $heading = $heading ?? 'Host Dashboard';
 $user = $user ?? [];
+$roleLabel = $roleLabel ?? 'Host';
+$toolsHeading = $toolsHeading ?? $roleLabel . ' tools';
 $assignedEvents = $assignedEvents ?? 0;
 $checkedInPlayers = $checkedInPlayers ?? 0;
 $cashToHandOver = $cashToHandOver ?? 0;
@@ -11,7 +13,7 @@ $cashToHandOver = $cashToHandOver ?? 0;
         <div class="hero-kicker">Event Control</div>
         <h1><?= htmlspecialchars($heading) ?></h1>
         <p>
-            Welcome, <?= htmlspecialchars($user['email'] ?? 'host') ?>.
+            Welcome, <?= htmlspecialchars($user['email'] ?? strtolower($roleLabel)) ?>.
             Manage assigned events, check-ins, walk-ins, reports, and tournament results.
         </p>
     </div>
@@ -35,7 +37,7 @@ $cashToHandOver = $cashToHandOver ?? 0;
 </section>
 
 <section class="card">
-    <h2>Host tools</h2>
+    <h2><?= htmlspecialchars($toolsHeading) ?></h2>
 
     <div class="shortcut-grid">
         <a class="shortcut-card" href="index.php?page=host-events">
@@ -50,7 +52,7 @@ $cashToHandOver = $cashToHandOver ?? 0;
 
         <a class="shortcut-card" href="index.php?page=host-events">
             <strong>Walk-ins</strong>
-            <span>Open Assigned Events, choose Manage Event, then use Add Walk-in Player.</span>
+            <span>Open Assigned Events, choose Check-in & Walk-ins, then use Add Walk-in Player.</span>
         </a>
 
         <a class="shortcut-card" href="index.php?page=host-events">

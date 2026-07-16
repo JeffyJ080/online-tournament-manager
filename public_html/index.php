@@ -1,6 +1,8 @@
 <?php
 $config = require __DIR__ . '/../mate_config/app.php';
 
+date_default_timezone_set($config['timezone'] ?? 'Africa/Johannesburg');
+
 if (!empty($config['production'])) {
     ini_set('display_errors', '0');
     error_reporting(E_ALL);
@@ -47,8 +49,13 @@ require_once __DIR__ . '/../mate_app/Controllers/AdminEventController.php';
 require_once __DIR__ . '/../mate_app/Controllers/HostEventController.php';
 require_once __DIR__ . '/../mate_app/Controllers/TournamentManagerController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminUserController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminPlayerController.php';
 require_once __DIR__ . '/../mate_app/Controllers/AdminLeaderboardController.php';
 require_once __DIR__ . '/../mate_app/Controllers/ProfileController.php';
+require_once __DIR__ . '/../mate_app/Controllers/ExportController.php';
+require_once __DIR__ . '/../mate_app/Controllers/AdminAuditController.php';
+require_once __DIR__ . '/../mate_app/Controllers/FinanceController.php';
+require_once __DIR__ . '/../mate_app/Controllers/VenuePartnerController.php';
 require_once __DIR__ . '/../mate_app/Helpers/Auth.php';
 require_once __DIR__ . '/../mate_app/Helpers/url.php';
 require_once __DIR__ . '/../mate_app/Helpers/Csrf.php';
@@ -77,8 +84,13 @@ $adminEventController = new AdminEventController();
 $hostEventController = new HostEventController();
 $tournamentManagerController = new TournamentManagerController();
 $adminUserController = new AdminUserController();
+$adminPlayerController = new AdminPlayerController();
 $adminLeaderboardController = new AdminLeaderboardController();
 $profileController = new ProfileController();
+$exportController = new ExportController();
+$adminAuditController = new AdminAuditController();
+$financeController = new FinanceController();
+$venuePartnerController = new VenuePartnerController();
 
 $router->get('home', function () use ($publicController) {
     $publicController->home();
@@ -120,6 +132,10 @@ $router->get('reset-password-submit', function () use ($authController) {
     $authController->resetPassword();
 });
 
+$router->get('verify-email', function () use ($authController) {
+    $authController->verifyEmail();
+});
+
 $router->get('register-submit', function () use ($authController) {
     $authController->register();
 });
@@ -132,6 +148,14 @@ $router->get('dashboard', function () use ($dashboardController) {
     $dashboardController->index();
 });
 
+$router->get('finance-stats', function () use ($financeController) {
+    $financeController->index();
+});
+
+$router->get('finance-stats-email', function () use ($financeController) {
+    $financeController->emailSummary();
+});
+
 $router->get('my-profile', function () use ($profileController) {
     $profileController->show();
 });
@@ -142,6 +166,26 @@ $router->get('my-profile-update', function () use ($profileController) {
 
 $router->get('my-profile-password', function () use ($profileController) {
     $profileController->changePassword();
+});
+
+$router->get('my-profile-claim-history', function () use ($profileController) {
+    $profileController->claimHistory();
+});
+
+$router->get('my-match-history', function () use ($profileController) {
+    $profileController->matchHistory();
+});
+
+$router->get('accept-walkin-invite', function () use ($profileController) {
+    $profileController->acceptWalkInInvite();
+});
+
+$router->get('walkin-invite', function () use ($profileController) {
+    $profileController->acceptWalkInInvite();
+});
+
+$router->get('claim-walkin', function () use ($profileController) {
+    $profileController->acceptWalkInInvite();
 });
 
 $router->get('logout', function () use ($authController) {
@@ -168,6 +212,26 @@ $router->get('admin-venues-update', function () use ($adminVenueController) {
     $adminVenueController->update();
 });
 
+$router->get('admin-venue-update-requests', function () use ($adminVenueController) {
+    $adminVenueController->updateRequests();
+});
+
+$router->get('admin-venue-update-approve', function () use ($adminVenueController) {
+    $adminVenueController->approveUpdateRequest();
+});
+
+$router->get('admin-venue-update-reject', function () use ($adminVenueController) {
+    $adminVenueController->rejectUpdateRequest();
+});
+
+$router->get('venue-partner-venue', function () use ($venuePartnerController) {
+    $venuePartnerController->showVenue();
+});
+
+$router->get('venue-partner-request-update', function () use ($venuePartnerController) {
+    $venuePartnerController->requestUpdate();
+});
+
 $router->get('event', function () use ($publicController) {
     $publicController->eventDetails();
 });
@@ -192,6 +256,10 @@ $router->get('admin-registrations-update', function () use ($adminRegistrationCo
     $adminRegistrationController->update();
 });
 
+$router->get('export-registrations', function () use ($exportController) {
+    $exportController->registrations();
+});
+
 $router->get('upload-proof', function () use ($paymentProofController) {
     $paymentProofController->create();
 });
@@ -210,6 +278,14 @@ $router->get('admin-payment-proofs-review', function () use ($adminPaymentProofC
 
 $router->get('admin-payment-proofs-update', function () use ($adminPaymentProofController) {
     $adminPaymentProofController->update();
+});
+
+$router->get('export-payment-proofs', function () use ($exportController) {
+    $exportController->paymentProofs();
+});
+
+$router->get('export-finance-stats', function () use ($exportController) {
+    $exportController->financeStats();
 });
 
 $router->get('my-registrations', function () use ($playerRegistrationController) {
@@ -232,12 +308,36 @@ $router->get('admin-users-update', function () use ($adminUserController) {
     $adminUserController->update();
 });
 
+$router->get('admin-players', function () use ($adminPlayerController) {
+    $adminPlayerController->index();
+});
+
+$router->get('admin-players-link', function () use ($adminPlayerController) {
+    $adminPlayerController->linkAccount();
+});
+
+$router->get('admin-players-materialize', function () use ($adminPlayerController) {
+    $adminPlayerController->materializeRegistrations();
+});
+
+$router->get('admin-players-merge', function () use ($adminPlayerController) {
+    $adminPlayerController->merge();
+});
+
 $router->get('admin-leaderboards', function () use ($adminLeaderboardController) {
     $adminLeaderboardController->index();
 });
 
 $router->get('admin-leaderboards-store', function () use ($adminLeaderboardController) {
     $adminLeaderboardController->store();
+});
+
+$router->get('admin-leaderboards-recalculate', function () use ($adminLeaderboardController) {
+    $adminLeaderboardController->recalculate();
+});
+
+$router->get('admin-audit', function () use ($adminAuditController) {
+    $adminAuditController->index();
 });
 
 $router->get('admin-events-create', function () use ($adminEventController) {
@@ -256,12 +356,28 @@ $router->get('admin-events-update', function () use ($adminEventController) {
     $adminEventController->update();
 });
 
+$router->get('admin-events-generate-recurring', function () use ($adminEventController) {
+    $adminEventController->generateRecurring();
+});
+
 $router->get('venues', function () use ($publicController) {
     $publicController->venues();
 });
 
+$router->get('tournament-archive', function () use ($publicController) {
+    $publicController->tournamentArchive();
+});
+
+$router->get('player', function () use ($publicController) {
+    $publicController->playerProfile();
+});
+
 $router->get('leaderboard', function () use ($publicController) {
     $publicController->leaderboard();
+});
+
+$router->get('export-leaderboard', function () use ($exportController) {
+    $exportController->leaderboard();
 });
 
 $router->get('live-tournament', function () use ($publicController) {
@@ -276,6 +392,14 @@ $router->get('live-display-data', function () use ($publicController) {
     $publicController->liveDisplayData();
 });
 
+$router->get('timer-control', function () use ($tournamentManagerController) {
+    $tournamentManagerController->timerControl();
+});
+
+$router->get('timer-control-update', function () use ($tournamentManagerController) {
+    $tournamentManagerController->updateTimerControl();
+});
+
 $router->get('host-events', function () use ($hostEventController) {
     $hostEventController->assigned();
 });
@@ -284,12 +408,24 @@ $router->get('host-event-registrations', function () use ($hostEventController) 
     $hostEventController->registrations();
 });
 
+$router->get('export-event-registrations', function () use ($exportController) {
+    $exportController->eventRegistrations();
+});
+
 $router->get('host-check-in', function () use ($hostEventController) {
     $hostEventController->checkIn();
 });
 
 $router->get('host-walk-in', function () use ($hostEventController) {
     $hostEventController->addWalkIn();
+});
+
+$router->get('host-walk-in-invite', function () use ($hostEventController) {
+    $hostEventController->inviteWalkIn();
+});
+
+$router->get('host-walk-in-link', function () use ($hostEventController) {
+    $hostEventController->linkWalkIn();
 });
 
 $router->get('host-event-report', function () use ($hostEventController) {
@@ -312,6 +448,10 @@ $router->get('tournament-import-participants', function () use ($tournamentManag
     $tournamentManagerController->importParticipants();
 });
 
+$router->get('tournament-add-late-entries', function () use ($tournamentManagerController) {
+    $tournamentManagerController->addLateEntries();
+});
+
 $router->get('tournament-generate-round-one', function () use ($tournamentManagerController) {
     $tournamentManagerController->generateRoundOne();
 });
@@ -324,12 +464,24 @@ $router->get('tournament-submit-round-results', function () use ($tournamentMana
     $tournamentManagerController->submitRoundResults();
 });
 
+$router->get('admin-correct-round-results', function () use ($tournamentManagerController) {
+    $tournamentManagerController->adminCorrectRoundResults();
+});
+
 $router->get('tournament-generate-next-round', function () use ($tournamentManagerController) {
     $tournamentManagerController->generateNextRound();
 });
 
 $router->get('tournament-complete', function () use ($tournamentManagerController) {
     $tournamentManagerController->completeTournament();
+});
+
+$router->get('export-tournament-results', function () use ($exportController) {
+    $exportController->tournamentResults();
+});
+
+$router->get('export-pairings', function () use ($exportController) {
+    $exportController->pairings();
 });
 
 $router->dispatch();

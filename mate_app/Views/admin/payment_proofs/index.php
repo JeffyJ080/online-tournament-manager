@@ -34,6 +34,7 @@ function proofMoney($amount): string
             <h2>Uploaded Proofs</h2>
             <p>Newest uploads appear first.</p>
         </div>
+        <a class="btn btn-outline" href="index.php?page=export-payment-proofs">Export CSV</a>
     </div>
 
     <?php if (empty($proofs)): ?>

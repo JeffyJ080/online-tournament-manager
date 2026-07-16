@@ -17,6 +17,10 @@ function adminUserSelected($current, string $value): string
 
 function adminUserLabel(?string $value): string
 {
+    if ($value === 'venue_manager') {
+        return 'Venue Partner';
+    }
+
     return $value ? ucwords(str_replace('_', ' ', $value)) : '-';
 }
 ?>
@@ -25,7 +29,7 @@ function adminUserLabel(?string $value): string
     <div>
         <div class="hero-kicker">Admin</div>
         <h1><?= htmlspecialchars($heading) ?></h1>
-        <p>Create staff accounts, assign roles, and manage account status.</p>
+        <p>Create internal staff accounts, external Venue Partner accounts, and players.</p>
     </div>
 </section>
 
@@ -94,7 +98,7 @@ function adminUserLabel(?string $value): string
     <div class="section-header">
         <div>
             <h2>Accounts</h2>
-            <p>Update role and account status for existing users.</p>
+        <p>Update role and account status for existing users.</p>
         </div>
     </div>
 

@@ -1,6 +1,7 @@
 <?php
 $heading = $heading ?? 'Submit Event Report';
 $event = $event ?? [];
+$summary = $summary ?? [];
 $errors = $errors ?? [];
 $old = $old ?? [];
 
@@ -18,6 +19,25 @@ function reportOld(array $old, string $key): string
             Submit the end-of-event summary for
             <strong><?= htmlspecialchars($event['title'] ?? 'this event') ?></strong>.
         </p>
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <div class="card stat-card">
+        <strong><?= (int) ($summary['checked_in'] ?? 0) ?>/<?= (int) ($summary['total'] ?? 0) ?></strong>
+        <span>Checked In</span>
+    </div>
+    <div class="card stat-card">
+        <strong><?= (int) ($summary['walk_ins'] ?? 0) ?></strong>
+        <span>Walk-ins</span>
+    </div>
+    <div class="card stat-card">
+        <strong><?= (int) ($summary['no_shows'] ?? 0) ?></strong>
+        <span>No-shows</span>
+    </div>
+    <div class="card stat-card">
+        <strong><?= (int) ($summary['cash'] ?? 0) ?>/<?= (int) ($summary['eft'] ?? 0) ?></strong>
+        <span>Cash / EFT</span>
     </div>
 </section>
 
