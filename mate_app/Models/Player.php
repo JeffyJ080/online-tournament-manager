@@ -24,9 +24,10 @@ class Player extends Model
                 rating_category,
                 starting_rating,
                 current_rating,
+                peak_rating,
                 public_slug
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
 
         $stmt = $this->db->prepare($sql);
@@ -38,6 +39,7 @@ class Player extends Model
             $phone,
             $email,
             $ratingCategory,
+            $startingRating,
             $startingRating,
             $startingRating,
             $this->uniqueSlug($displayName ?: $realName)
@@ -180,10 +182,11 @@ class Player extends Model
                         rating_category,
                         starting_rating,
                         current_rating,
+                        peak_rating,
                         public_slug,
                         profile_visibility
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'private')
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'private')
                 ");
 
                 $insert->execute([
@@ -193,6 +196,7 @@ class Player extends Model
                     $registration['phone'] ?: null,
                     $email !== '' ? $email : null,
                     $ratingCategory,
+                    $startingRating,
                     $startingRating,
                     $startingRating,
                     $this->uniqueSlug(($displayName !== '' ? $displayName : $realName) ?: 'Imported Player')
@@ -474,6 +478,7 @@ class Player extends Model
     {
         $matches = $this->completedRatingMatches($tournamentId);
         $updates = 0;
+        $kFactors = [];
 
         foreach ($matches as $match) {
             $whitePlayerId = (int) ($match['white_player_id'] ?? 0);
@@ -492,6 +497,11 @@ class Player extends Model
                 : $this->getStartingRating($match['black_rating_category'] ?? 'beginner');
 
             if ($whitePlayerId > 0) {
+                $kFactors[$whitePlayerId] ??= $this->ratingKFactorForTournament(
+                    $whitePlayerId,
+                    $whiteRating,
+                    $tournamentId
+                );
                 $updates += $this->applyMatchRating(
                     $tournamentId,
                     (int) $match['id'],
@@ -499,11 +509,17 @@ class Player extends Model
                     $blackPlayerId > 0 ? $blackPlayerId : null,
                     $whiteRating,
                     $blackRating,
-                    $whiteScore
+                    $whiteScore,
+                    $kFactors[$whitePlayerId]
                 );
             }
 
             if ($blackPlayerId > 0) {
+                $kFactors[$blackPlayerId] ??= $this->ratingKFactorForTournament(
+                    $blackPlayerId,
+                    $blackRating,
+                    $tournamentId
+                );
                 $updates += $this->applyMatchRating(
                     $tournamentId,
                     (int) $match['id'],
@@ -511,7 +527,8 @@ class Player extends Model
                     $whitePlayerId > 0 ? $whitePlayerId : null,
                     $blackRating,
                     $whiteRating,
-                    $blackScore
+                    $blackScore,
+                    $kFactors[$blackPlayerId]
                 );
             }
         }
@@ -553,21 +570,23 @@ class Player extends Model
         ?int $opponentPlayerId,
         int $playerRating,
         int $opponentRating,
-        float $score
+        float $score,
+        int $kFactor
     ): int {
         if ($this->ratingAlreadyApplied($matchId, $playerId)) {
             return 0;
         }
 
         $expected = 1 / (1 + (10 ** (($opponentRating - $playerRating) / 400)));
-        $newRating = (int) round($playerRating + (24 * ($score - $expected)));
+        $newRating = (int) round($playerRating + ($kFactor * ($score - $expected)));
         $change = $newRating - $playerRating;
 
         $this->db->prepare("
             UPDATE players
-            SET current_rating = ?
+            SET current_rating = ?,
+                peak_rating = GREATEST(peak_rating, ?)
             WHERE id = ?
-        ")->execute([$newRating, $playerId]);
+        ")->execute([$newRating, $newRating, $playerId]);
 
         $stmt = $this->db->prepare("
             INSERT INTO rating_adjustments (
@@ -578,9 +597,10 @@ class Player extends Model
                 old_rating,
                 new_rating,
                 change_amount,
-                result_score
+                result_score,
+                k_factor
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
@@ -592,9 +612,61 @@ class Player extends Model
             $newRating,
             $change,
             $score,
+            $kFactor,
         ]);
 
         return 1;
+    }
+
+    private function ratingKFactorForTournament(
+        int $playerId,
+        int $currentRating,
+        int $tournamentId
+    ): int
+    {
+        $existing = $this->db->prepare("
+            SELECT k_factor
+            FROM rating_adjustments
+            WHERE player_id = ?
+              AND tournament_id = ?
+            ORDER BY id ASC
+            LIMIT 1
+        ");
+        $existing->execute([$playerId, $tournamentId]);
+        $recordedKFactor = $existing->fetchColumn();
+
+        if ($recordedKFactor !== false) {
+            return (int) $recordedKFactor;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT
+                players.peak_rating,
+                COUNT(rating_adjustments.id) AS rated_games
+            FROM players
+            LEFT JOIN rating_adjustments
+                ON rating_adjustments.player_id = players.id
+                AND rating_adjustments.tournament_id <> ?
+            WHERE players.id = ?
+            GROUP BY players.id, players.peak_rating
+        ");
+        $stmt->execute([$tournamentId, $playerId]);
+        $ratingState = $stmt->fetch();
+
+        $peakRating = max(
+            $currentRating,
+            (int) ($ratingState['peak_rating'] ?? $currentRating)
+        );
+
+        if ($peakRating >= 2400) {
+            return 10;
+        }
+
+        if ((int) ($ratingState['rated_games'] ?? 0) < 30) {
+            return 40;
+        }
+
+        return 20;
     }
 
     private function ratingAlreadyApplied(int $matchId, int $playerId): bool

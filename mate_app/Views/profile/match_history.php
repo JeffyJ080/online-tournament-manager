@@ -41,6 +41,7 @@ function mhName(array $match, string $side): string
                         <th>Old</th>
                         <th>New</th>
                         <th>Change</th>
+                        <th>K</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,6 +53,7 @@ function mhName(array $match, string $side): string
                             <td><?= (int) $row['old_rating'] ?></td>
                             <td><?= (int) $row['new_rating'] ?></td>
                             <td><?= (int) $row['change_amount'] ?></td>
+                            <td><?= (int) ($row['k_factor'] ?? 24) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
