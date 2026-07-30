@@ -225,7 +225,7 @@ if ($latestRound && !$latestRoundComplete) {
                         <tr>
                             <th>Seed</th>
                             <th>Player</th>
-                            <th>Rating</th>
+                            <th>Rating at Entry</th>
                             <th>Score</th>
                             <th>Status</th>
                         </tr>

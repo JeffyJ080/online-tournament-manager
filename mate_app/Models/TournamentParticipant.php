@@ -18,7 +18,7 @@ class TournamentParticipant extends Model
                 continue;
             }
 
-            $rating = $this->ratingFromCategory($registration['rating_category'] ?? 'beginner');
+            $rating = $this->ratingAtTournamentEntry($registration);
 
             $sql = "
                 INSERT INTO tournament_participants (
@@ -296,6 +296,28 @@ class TournamentParticipant extends Model
             'standard' => 1200,
             default => 800,
         };
+    }
+
+    private function ratingAtTournamentEntry(array $registration): int
+    {
+        $playerId = (int) ($registration['player_id'] ?? 0);
+
+        if ($playerId > 0) {
+            $stmt = $this->db->prepare("
+                SELECT current_rating
+                FROM players
+                WHERE id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$playerId]);
+            $player = $stmt->fetch();
+
+            if ($player) {
+                return (int) $player['current_rating'];
+            }
+        }
+
+        return $this->ratingFromCategory($registration['rating_category'] ?? 'beginner');
     }
 
     private function applyTieBreaks(int $tournamentId, array $standings): array
