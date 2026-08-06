@@ -191,6 +191,11 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
         background: rgba(18, 27, 47, 0.82);
     }
 
+    .standings-panel {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+    }
+
     .display-panel-header {
         display: flex;
         justify-content: space-between;
@@ -207,6 +212,30 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
 
     .display-list {
         display: grid;
+    }
+
+    .standings-top {
+        position: relative;
+        z-index: 1;
+        border-bottom: 2px solid rgba(240, 180, 42, 0.28);
+        background: rgba(18, 27, 47, 0.98);
+        box-shadow: 0 10px 18px rgba(5, 8, 18, 0.24);
+    }
+
+    .standings-scroll {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+    }
+
+    .standings-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .standings-scroll.is-empty {
+        display: none;
     }
 
     .standing-row,
@@ -528,6 +557,14 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
             height: auto;
         }
 
+        .standings-panel {
+            display: block;
+        }
+
+        .standings-scroll {
+            max-height: 18rem;
+        }
+
         .pairings-list {
             height: auto;
             grid-template-columns: 1fr;
@@ -598,8 +635,10 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
         }
 
         .slide-track,
-        .progress-fill {
+        .progress-fill,
+        .standings-scroll {
             transition: none;
+            scroll-behavior: auto;
         }
     }
 </style>
@@ -626,12 +665,15 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
                     <span class="display-note" id="display-updated">Updated now</span>
                 </div>
                 <div class="round-grid">
-                    <section class="display-panel">
+                    <section class="display-panel standings-panel">
                         <div class="display-panel-header">
                             <h3>Standings</h3>
-                            <span class="display-note">Top 5</span>
+                            <!-- <span class="display-note">Top 3 fixed</span> -->
                         </div>
-                        <div class="display-list" id="standings-list"></div>
+                        <div class="display-list standings-top" id="standings-top"></div>
+                        <div class="standings-scroll" id="standings-scroll" aria-label="Standings from fourth place onward">
+                            <div class="display-list" id="standings-rest"></div>
+                        </div>
                     </section>
                     <section class="display-panel">
                         <div class="display-panel-header">
@@ -736,6 +778,7 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
     let carouselEnabled = false;
     let carouselPaused = false;
     let carouselInterval = null;
+    let standingsScrollInterval = null;
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -763,6 +806,59 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
             : '<div class="empty-display">Leaderboard results will appear here.</div>';
     }
 
+    function standingRows(rows) {
+        return rows.map((row) => `
+            <div class="standing-row">
+                <div class="rank">${escapeHtml(row.rank)}</div>
+                <div class="display-name">${escapeHtml(row.name)}</div>
+                <div class="score">${escapeHtml(row.score)}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderStandings(standings) {
+        const topStandings = standings.slice(0, 3);
+        const remainingStandings = standings.slice(3);
+        const scrollViewport = document.getElementById('standings-scroll');
+        const previousScrollTop = scrollViewport.scrollTop;
+
+        document.getElementById('standings-top').innerHTML = topStandings.length
+            ? standingRows(topStandings)
+            : '<div class="empty-display">No standings yet.</div>';
+        document.getElementById('standings-rest').innerHTML = standingRows(remainingStandings);
+        scrollViewport.classList.toggle('is-empty', remainingStandings.length === 0);
+        const maximumScroll = Math.max(0, scrollViewport.scrollHeight - scrollViewport.clientHeight);
+        scrollViewport.scrollTop = Math.min(previousScrollTop, maximumScroll);
+    }
+
+    function startStandingsAutoScroll() {
+        if (standingsScrollInterval) {
+            return;
+        }
+
+        standingsScrollInterval = setInterval(() => {
+            if (currentSlide !== 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+
+            const viewport = document.getElementById('standings-scroll');
+            const firstRow = viewport.querySelector('.standing-row');
+            const maximumScroll = viewport.scrollHeight - viewport.clientHeight;
+
+            if (!firstRow || maximumScroll <= 1) {
+                viewport.scrollTop = 0;
+                return;
+            }
+
+            if (viewport.scrollTop >= maximumScroll - 2) {
+                viewport.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            viewport.scrollBy({ top: firstRow.getBoundingClientRect().height, behavior: 'smooth' });
+        }, 2500);
+    }
+
     function renderDisplay(data) {
         document.getElementById('display-title').textContent = data.event?.title || 'Live Display';
         document.getElementById('display-round').textContent = data.tournament?.round_name || 'Not started';
@@ -772,15 +868,7 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
         const standings = data.standings || [];
         const pairings = data.pairings || [];
 
-        document.getElementById('standings-list').innerHTML = standings.length
-            ? standings.slice(0, 5).map((row) => `
-                <div class="standing-row">
-                    <div class="rank">${escapeHtml(row.rank)}</div>
-                    <div class="display-name">${escapeHtml(row.name)}</div>
-                    <div class="score">${escapeHtml(row.score)}</div>
-                </div>
-            `).join('')
-            : '<div class="empty-display">No standings yet.</div>';
+        renderStandings(standings);
 
         document.getElementById('pairings-list').innerHTML = pairings.length
             ? pairings.map((row) => `
@@ -1028,5 +1116,6 @@ $slideSeconds = max(6, min(60, (int) ($_GET['slides'] ?? 12)));
 
     buildSlideDots();
     renderDisplay(initialPayload);
+    startStandingsAutoScroll();
     setInterval(refreshDisplay, 2000);
 </script>
